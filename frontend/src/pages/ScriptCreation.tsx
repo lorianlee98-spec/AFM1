@@ -84,12 +84,27 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
   // AI生成提示词
   const [aiPrompt, setAiPrompt] = useState('')
 
-  // 加载项目列表
+  // 加载项目列表和恢复上次状态
   useEffect(() => {
-    // 从localStorage加载项目（实际应该从后端API加载）
+    // 从localStorage加载项目
     const savedProjects = localStorage.getItem('script_projects')
     if (savedProjects) {
-      setProjects(JSON.parse(savedProjects))
+      const parsedProjects = JSON.parse(savedProjects)
+      setProjects(parsedProjects)
+      
+      // 恢复上次选中的项目
+      const lastProjectId = localStorage.getItem('script_last_project_id')
+      if (lastProjectId) {
+        const lastProject = parsedProjects.find((p: ScriptProject) => p.id === lastProjectId)
+        if (lastProject) {
+          setCurrentProject(lastProject)
+          // 恢复剧本内容
+          const savedContent = localStorage.getItem(`script_${lastProjectId}`)
+          if (savedContent) {
+            setScriptContent(savedContent)
+          }
+        }
+      }
     }
   }, [])
 
@@ -97,6 +112,15 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
   useEffect(() => {
     localStorage.setItem('script_projects', JSON.stringify(projects))
   }, [projects])
+
+  // 保存当前选中的项目ID
+  useEffect(() => {
+    if (currentProject) {
+      localStorage.setItem('script_last_project_id', currentProject.id)
+    } else {
+      localStorage.removeItem('script_last_project_id')
+    }
+  }, [currentProject])
 
   // 自动保存剧本内容
   useEffect(() => {
@@ -115,6 +139,44 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
     
     return () => clearTimeout(timeoutId)
   }, [scriptContent, currentProject])
+
+  // 页面可见性变化时恢复数据
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // 页面重新可见时，重新加载数据
+        const savedProjects = localStorage.getItem('script_projects')
+        if (savedProjects) {
+          const parsedProjects = JSON.parse(savedProjects)
+          setProjects(parsedProjects)
+          
+          // 如果当前有选中的项目，恢复其内容
+          if (currentProject) {
+            const savedContent = localStorage.getItem(`script_${currentProject.id}`)
+            if (savedContent !== null && savedContent !== scriptContent) {
+              setScriptContent(savedContent)
+            }
+          }
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }, [currentProject, scriptContent])
+
+  // 页面关闭前强制保存
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (currentProject && scriptContent) {
+        localStorage.setItem(`script_${currentProject.id}`, scriptContent)
+        localStorage.setItem('script_projects', JSON.stringify(projects))
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [currentProject, scriptContent, projects])
 
   const handleCreateProject = () => {
     if (!newProject.title.trim()) return
