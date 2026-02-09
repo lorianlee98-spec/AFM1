@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
+from app.api.v1.api import api_router
 
 
 @asynccontextmanager
@@ -48,6 +49,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 注册API路由
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")
