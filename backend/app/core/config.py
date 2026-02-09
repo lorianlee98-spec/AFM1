@@ -63,6 +63,9 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "json"
     
+    # API配置
+    API_V1_STR: str = "/api/v1"
+    
     @validator("ALLOWED_ORIGINS", pre=True, always=True)
     def parse_allowed_origins(cls, v):
         """解析允许的来源列表"""
