@@ -63,11 +63,13 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "json"
     
-    @validator("ALLOWED_ORIGINS", pre=True)
+    @validator("ALLOWED_ORIGINS", pre=True, always=True)
     def parse_allowed_origins(cls, v):
         """解析允许的来源列表"""
         if isinstance(v, str):
-            return [origin.strip() for origin in v.split(",")]
+            if not v:
+                return ["http://localhost:3000", "http://localhost:5173"]
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
         return v
     
     class Config:
