@@ -328,18 +328,19 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
             {/* 项目头部 */}
             <div className="editor-header">
               <div className="project-header-info">
-                {/* 返回按钮 */}
-                {onBack && (
-                  <motion.button
-                    className="btn-back"
-                    onClick={onBack}
-                    whileHover={{ x: -4 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <ArrowLeft size={18} />
-                    返回首页
-                  </motion.button>
-                )}
+                {/* 返回按钮 - 返回到项目列表 */}
+                <motion.button
+                  className="btn-back"
+                  onClick={() => {
+                    setCurrentProject(null)
+                    setScriptContent('')
+                  }}
+                  whileHover={{ x: -4 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <ArrowLeft size={18} />
+                  返回
+                </motion.button>
                 <h1 className="project-header-title">{currentProject.title}</h1>
                 <p className="project-header-desc">{currentProject.description}</p>
               </div>
