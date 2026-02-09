@@ -1,0 +1,30 @@
+# 这个文件指向 backend/requirements.txt
+# Render 需要在根目录找到 requirements.txt
+
+# 实际依赖在 backend/requirements.txt
+# 请确保 Root Directory 设置为 backend
+
+# 如果 Render 允许设置 Root Directory，请设置为 backend
+# 否则需要复制 backend/requirements.txt 到这里
+
+# 临时解决方案：复制 backend/requirements.txt 的内容到这里
+# 请查看 backend/requirements.txt 获取完整依赖列表
+
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+sqlalchemy==2.0.23
+alembic==1.12.1
+psycopg2-binary==2.9.9
+asyncpg==0.29.0
+python-jose[cryptography]==3.3.0
+bcrypt==4.1.1
+python-multipart==0.0.6
+email-validator==2.1.0
+python-dateutil==2.8.2
+httpx==0.25.2
+aiohttp==3.9.1
+python-dotenv==1.0.0
+structlog==23.2.0
+tenacity==8.2.3
