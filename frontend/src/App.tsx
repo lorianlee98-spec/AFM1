@@ -116,29 +116,36 @@ function App() {
             <Film size={28} />
             <Sparkles size={14} className="logo-sparkle" />
           </div>
-          <span className="logo-text">AI制片</span>
+          <span className="logo-text">AMF.io</span>
         </div>
 
         <nav className="sidebar-nav">
           {navItems.map((item) => {
             const Icon = item.icon
+            const isActive = activeNav === item.key
             return (
               <button
                 key={item.key}
-                className={`nav-item ${activeNav === item.key ? 'active' : ''}`}
+                className={`nav-item-glass ${isActive ? 'active' : ''}`}
                 onClick={() => setActiveNav(item.key)}
               >
-                <Icon size={20} />
-                <span>{item.label}</span>
+                <Icon 
+                  size={20} 
+                  className="nav-icon"
+                  style={{ color: isActive ? 'white' : 'var(--text-tertiary)' }}
+                />
+                <span style={{ color: isActive ? 'white' : 'var(--text-secondary)' }}>
+                  {item.label}
+                </span>
               </button>
             )
           })}
         </nav>
 
         <div className="sidebar-footer">
-          <button className="nav-item" onClick={handleLogout}>
-            <LogOut size={20} />
-            <span>退出登录</span>
+          <button className="nav-item-glass" onClick={handleLogout}>
+            <LogOut size={20} className="nav-icon" style={{ color: 'var(--text-tertiary)' }} />
+            <span style={{ color: 'var(--text-secondary)' }}>退出登录</span>
           </button>
         </div>
       </aside>
@@ -235,37 +242,7 @@ function App() {
                   </div>
                 </section>
 
-                {/* 核心优势 */}
-                <section className="features-section">
-                  <h2>核心优势</h2>
-                  <div className="features-grid">
-                    {[
-                      {
-                        title: '端到端自动化',
-                        desc: '从剧本到成片，全流程AI驱动，大幅降低制作门槛',
-                      },
-                      {
-                        title: '智能链路整合',
-                        desc: '各模块数据自动传递，无缝协作，提升制作效率',
-                      },
-                      {
-                        title: '高度可控性',
-                        desc: '在自动化的同时，保持用户对每个环节的干预能力',
-                      },
-                    ].map((feature, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.4 + 0.1 * index }}
-                        className="feature-card glass-card"
-                      >
-                        <h3>{feature.title}</h3>
-                        <p>{feature.desc}</p>
-                      </motion.div>
-                    ))}
-                  </div>
-                </section>
+
               </div>
             )}
 
@@ -358,12 +335,55 @@ function App() {
           padding: var(--space-3);
           display: flex;
           flex-direction: column;
-          gap: var(--space-1);
+          gap: var(--space-2);
         }
 
         .sidebar-footer {
           padding: var(--space-3);
           border-top: 1px solid var(--glass-border);
+        }
+
+        /* 玻璃拟态导航项 */
+        .nav-item-glass {
+          display: flex;
+          align-items: center;
+          gap: var(--space-3);
+          padding: 12px 16px;
+          border-radius: 12px;
+          background: transparent;
+          border: 1px solid transparent;
+          cursor: pointer;
+          transition: all 0.3s var(--ease-smooth);
+          text-align: left;
+          width: 100%;
+        }
+
+        .nav-item-glass:hover {
+          background: var(--glass-bg);
+          border-color: var(--glass-border);
+          backdrop-filter: blur(10px);
+        }
+
+        .nav-item-glass.active {
+          background: linear-gradient(135deg, rgba(10, 132, 255, 0.15) 0%, rgba(191, 90, 242, 0.15) 100%);
+          border-color: rgba(10, 132, 255, 0.3);
+          box-shadow: 
+            0 4px 24px rgba(10, 132, 255, 0.15),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-item-glass span {
+          font-size: var(--text-base);
+          font-weight: var(--font-medium);
+          transition: color 0.2s ease;
+        }
+
+        .nav-icon {
+          transition: color 0.2s ease, transform 0.2s ease;
+        }
+
+        .nav-item-glass:hover .nav-icon {
+          transform: scale(1.1);
         }
 
         /* 主内容区 */
@@ -507,41 +527,6 @@ function App() {
         .workflow-card p {
           font-size: var(--text-sm);
           color: var(--text-secondary);
-        }
-
-        /* 核心优势 */
-        .features-section {
-          margin-top: var(--space-10);
-        }
-
-        .features-section h2 {
-          font-size: var(--text-xl);
-          font-weight: var(--font-semibold);
-          color: var(--text-primary);
-          margin-bottom: var(--space-5);
-        }
-
-        .features-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: var(--space-4);
-        }
-
-        .feature-card {
-          padding: var(--space-5);
-        }
-
-        .feature-card h3 {
-          font-size: var(--text-base);
-          font-weight: var(--font-semibold);
-          color: var(--text-primary);
-          margin-bottom: var(--space-2);
-        }
-
-        .feature-card p {
-          font-size: var(--text-sm);
-          color: var(--text-secondary);
-          line-height: 1.6;
         }
 
         /* 占位页面 */
