@@ -1,0 +1,26 @@
+Alembic 数据库迁移目录
+
+使用说明:
+
+1. 初始化迁移环境 (已完成)
+   alembic init alembic
+
+2. 创建新的迁移脚本
+   alembic revision -m "create user table"
+
+3. 自动根据模型生成迁移
+   alembic revision --autogenerate -m "add new fields"
+
+4. 升级数据库到最新版本
+   alembic upgrade head
+
+5. 降级数据库
+   alembic downgrade -1
+
+6. 查看当前版本
+   alembic current
+
+7. 查看历史版本
+   alembic history
+
+更多文档: https://alembic.sqlalchemy.org/
