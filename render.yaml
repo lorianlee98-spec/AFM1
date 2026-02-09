@@ -1,0 +1,26 @@
+# Render 部署配置 - 使用 Docker
+services:
+  - type: web
+    name: ai-video-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: false
+      - key: APP_NAME
+        value: AI视频制片链路系统
+      - key: APP_VERSION
+        value: 0.1.0
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 30
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: 7
+      - key: ALGORITHM
+        value: HS256
+      - key: ALLOWED_ORIGINS
+        value: "*"

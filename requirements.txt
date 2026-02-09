@@ -2,9 +2,10 @@
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
 
-# Pydantic - 使用兼容版本避免编译
-pydantic==2.5.3
-pydantic-settings==2.1.0
+# Pydantic - 使用预编译版本
+pydantic==2.4.2
+pydantic-core==2.10.1
+pydantic-settings==2.0.3
 
 # 数据库
 sqlalchemy==2.0.23
