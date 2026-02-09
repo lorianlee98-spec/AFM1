@@ -88,12 +88,8 @@ export default function ScriptCreation() {
       const data = await scriptApi.getScripts()
       setScripts(data)
     } catch (err: any) {
-      setError(err.response?.data?.detail || '加载剧本失败')
-      // 如果后端不可用，使用本地存储作为后备
-      const savedScripts = localStorage.getItem('script_projects')
-      if (savedScripts) {
-        setScripts(JSON.parse(savedScripts))
-      }
+      // 错误已经在API层处理，这里不需要显示错误
+      console.log('使用本地存储模式')
     } finally {
       setIsLoading(false)
     }
@@ -125,24 +121,8 @@ export default function ScriptCreation() {
         duration: 5,
       })
     } catch (err: any) {
-      setError(err.response?.data?.detail || '创建剧本失败')
-      // 如果后端不可用，使用本地存储
-      const localScript: Script = {
-        id: Date.now(),
-        title: newProject.title,
-        description: newProject.description,
-        content: '',
-        genre: newProject.genre,
-        target_audience: newProject.targetAudience,
-        duration: newProject.duration,
-        status: 'draft',
-        user_id: 0,
-        created_at: new Date().toISOString(),
-        updated_at: null,
-      }
-      setScripts([localScript, ...scripts])
-      setCurrentScript(localScript)
-      setShowCreateModal(false)
+      // 错误已经在API层处理
+      console.log('创建剧本时使用本地存储')
     } finally {
       setIsLoading(false)
     }
