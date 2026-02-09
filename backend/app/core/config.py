@@ -3,9 +3,8 @@
 管理所有环境变量和配置项
 """
 
-from typing import List, Optional
+from typing import Optional
 from pydantic_settings import BaseSettings
-from pydantic import validator
 
 
 class Settings(BaseSettings):
@@ -34,7 +33,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     ALGORITHM: str = "HS256"
     
-    # CORS配置 - 使用字符串形式，通过validator解析
+    # CORS配置 - 使用字符串形式
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
     
     # AI服务API配置
@@ -61,15 +60,6 @@ class Settings(BaseSettings):
     
     # API配置
     API_V1_STR: str = "/api/v1"
-    
-    @validator("ALLOWED_ORIGINS", pre=True, always=True)
-    def parse_allowed_origins(cls, v):
-        """解析允许的来源列表"""
-        if isinstance(v, str):
-            if not v:
-                return ["http://localhost:3000", "http://localhost:5173"]
-            return [origin.strip() for origin in v.split(",") if origin.strip()]
-        return v
     
     class Config:
         env_file = ".env"
