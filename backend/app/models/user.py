@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 
@@ -17,3 +18,6 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     avatar_url = Column(String(500), nullable=True)
     bio = Column(Text, nullable=True)
+    
+    # 关联剧本
+    scripts = relationship("Script", back_populates="user", cascade="all, delete-orphan")

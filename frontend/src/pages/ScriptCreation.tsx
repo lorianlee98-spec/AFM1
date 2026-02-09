@@ -1,9 +1,10 @@
 /**
  * 剧本创作页面
  * 支持AI辅助生成和手动编辑剧本
+ * 集成后端API存储
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   FileText, 
@@ -13,39 +14,17 @@ import {
   Plus, 
   Trash2, 
   Edit3,
-  ChevronRight,
   Wand2,
   Clock,
-  Tag,
-  MoreVertical,
   Check,
   AlertCircle,
-  ArrowLeft
+  ArrowLeft,
+  MoreVertical,
+  Edit2
 } from 'lucide-react'
-import axios from 'axios'
+import { scriptApi, Script, ScriptCreate, ScriptUpdate } from '../services/scriptApi'
 import '../styles/theme.css'
 import '../styles/components.css'
-
-interface Script {
-  id: string
-  title: string
-  content: string
-  genre: string
-  targetDuration: number
-  createdAt: string
-  updatedAt: string
-  status: 'draft' | 'generating' | 'completed'
-}
-
-interface ScriptProject {
-  id: string
-  title: string
-  description: string
-  genre: string
-  targetAudience: string
-  duration: number
-  createdAt: string
-}
 
 const GENRES = [
   { value: 'comedy', label: '喜剧', color: '#FF9500' },
@@ -58,19 +37,22 @@ const GENRES = [
   { value: 'animation', label: '动画', color: '#AF52DE' },
 ]
 
-interface ScriptCreationProps {
-  onBack?: () => void
-}
-
-export default function ScriptCreation({ onBack }: ScriptCreationProps) {
-  const [projects, setProjects] = useState<ScriptProject[]>([])
-  const [currentProject, setCurrentProject] = useState<ScriptProject | null>(null)
+export default function ScriptCreation() {
+  const [scripts, setScripts] = useState<Script[]>([])
+  const [currentScript, setCurrentScript] = useState<Script | null>(null)
   const [scriptContent, setScriptContent] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showRenameModal, setShowRenameModal] = useState(false)
+  const [scriptToRename, setScriptToRename] = useState<Script | null>(null)
+  const [newTitle, setNewTitle] = useState('')
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor')
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [error, setError] = useState('')
+  const [menuOpenId, setMenuOpenId] = useState<number | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   // 新项目表单
   const [newProject, setNewProject] = useState({
@@ -84,151 +66,185 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
   // AI生成提示词
   const [aiPrompt, setAiPrompt] = useState('')
 
-  // 加载项目列表和恢复上次状态
+  // 点击外部关闭菜单
   useEffect(() => {
-    // 从localStorage加载项目
-    const savedProjects = localStorage.getItem('script_projects')
-    if (savedProjects) {
-      const parsedProjects = JSON.parse(savedProjects)
-      setProjects(parsedProjects)
-      
-      // 恢复上次选中的项目
-      const lastProjectId = localStorage.getItem('script_last_project_id')
-      if (lastProjectId) {
-        const lastProject = parsedProjects.find((p: ScriptProject) => p.id === lastProjectId)
-        if (lastProject) {
-          setCurrentProject(lastProject)
-          // 恢复剧本内容
-          const savedContent = localStorage.getItem(`script_${lastProjectId}`)
-          if (savedContent) {
-            setScriptContent(savedContent)
-          }
-        }
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpenId(null)
       }
     }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // 保存项目列表
+  // 加载剧本列表
   useEffect(() => {
-    localStorage.setItem('script_projects', JSON.stringify(projects))
-  }, [projects])
+    loadScripts()
+  }, [])
 
-  // 保存当前选中的项目ID
-  useEffect(() => {
-    if (currentProject) {
-      localStorage.setItem('script_last_project_id', currentProject.id)
-    } else {
-      localStorage.removeItem('script_last_project_id')
+  const loadScripts = async () => {
+    try {
+      setIsLoading(true)
+      const data = await scriptApi.getScripts()
+      setScripts(data)
+    } catch (err: any) {
+      setError(err.response?.data?.detail || '加载剧本失败')
+      // 如果后端不可用，使用本地存储作为后备
+      const savedScripts = localStorage.getItem('script_projects')
+      if (savedScripts) {
+        setScripts(JSON.parse(savedScripts))
+      }
+    } finally {
+      setIsLoading(false)
     }
-  }, [currentProject])
+  }
+
+  const handleCreateScript = async () => {
+    if (!newProject.title.trim()) return
+
+    try {
+      setIsLoading(true)
+      const scriptData: ScriptCreate = {
+        title: newProject.title,
+        description: newProject.description,
+        genre: newProject.genre,
+        target_audience: newProject.targetAudience,
+        duration: newProject.duration,
+        status: 'draft',
+      }
+      
+      const newScript = await scriptApi.createScript(scriptData)
+      setScripts([newScript, ...scripts])
+      setCurrentScript(newScript)
+      setShowCreateModal(false)
+      setNewProject({
+        title: '',
+        description: '',
+        genre: 'drama',
+        targetAudience: '',
+        duration: 5,
+      })
+    } catch (err: any) {
+      setError(err.response?.data?.detail || '创建剧本失败')
+      // 如果后端不可用，使用本地存储
+      const localScript: Script = {
+        id: Date.now(),
+        title: newProject.title,
+        description: newProject.description,
+        content: '',
+        genre: newProject.genre,
+        target_audience: newProject.targetAudience,
+        duration: newProject.duration,
+        status: 'draft',
+        user_id: 0,
+        created_at: new Date().toISOString(),
+        updated_at: null,
+      }
+      setScripts([localScript, ...scripts])
+      setCurrentScript(localScript)
+      setShowCreateModal(false)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleSelectScript = async (script: Script) => {
+    try {
+      setCurrentScript(script)
+      setScriptContent(script.content || '')
+      setMenuOpenId(null)
+    } catch (err: any) {
+      setError('加载剧本内容失败')
+    }
+  }
+
+  const handleDeleteScript = async (id: number, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!confirm('确定要删除这个剧本吗？')) return
+
+    try {
+      await scriptApi.deleteScript(id)
+      setScripts(scripts.filter(s => s.id !== id))
+      if (currentScript?.id === id) {
+        setCurrentScript(null)
+        setScriptContent('')
+      }
+    } catch (err: any) {
+      // 本地删除
+      setScripts(scripts.filter(s => s.id !== id))
+      if (currentScript?.id === id) {
+        setCurrentScript(null)
+        setScriptContent('')
+      }
+    }
+    setMenuOpenId(null)
+  }
+
+  const handleRenameScript = async (script: Script) => {
+    setScriptToRename(script)
+    setNewTitle(script.title)
+    setShowRenameModal(true)
+    setMenuOpenId(null)
+  }
+
+  const handleConfirmRename = async () => {
+    if (!scriptToRename || !newTitle.trim()) return
+
+    try {
+      const updated = await scriptApi.updateScript(scriptToRename.id, {
+        title: newTitle.trim()
+      })
+      setScripts(scripts.map(s => s.id === updated.id ? updated : s))
+      if (currentScript?.id === updated.id) {
+        setCurrentScript(updated)
+      }
+    } catch (err: any) {
+      // 本地更新
+      const updated = { ...scriptToRename, title: newTitle.trim() }
+      setScripts(scripts.map(s => s.id === updated.id ? updated : s))
+      if (currentScript?.id === updated.id) {
+        setCurrentScript(updated)
+      }
+    }
+    setShowRenameModal(false)
+    setScriptToRename(null)
+    setNewTitle('')
+  }
 
   // 自动保存剧本内容
   useEffect(() => {
-    if (!currentProject) return
+    if (!currentScript) return
     
-    const saveContent = () => {
+    const saveContent = async () => {
       setSaveStatus('saving')
-      localStorage.setItem(`script_${currentProject.id}`, scriptContent)
-      setSaveStatus('saved')
-      setLastSaved(new Date())
+      try {
+        await scriptApi.updateScriptContent(currentScript.id, scriptContent)
+        setSaveStatus('saved')
+        setLastSaved(new Date())
+      } catch (err) {
+        // 本地保存作为后备
+        localStorage.setItem(`script_content_${currentScript.id}`, scriptContent)
+        setSaveStatus('saved')
+        setLastSaved(new Date())
+      }
     }
 
-    // 延迟保存，避免频繁写入
     const timeoutId = setTimeout(saveContent, 1000)
     setSaveStatus('unsaved')
     
     return () => clearTimeout(timeoutId)
-  }, [scriptContent, currentProject])
-
-  // 页面可见性变化时恢复数据
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        // 页面重新可见时，重新加载数据
-        const savedProjects = localStorage.getItem('script_projects')
-        if (savedProjects) {
-          const parsedProjects = JSON.parse(savedProjects)
-          setProjects(parsedProjects)
-          
-          // 如果当前有选中的项目，恢复其内容
-          if (currentProject) {
-            const savedContent = localStorage.getItem(`script_${currentProject.id}`)
-            if (savedContent !== null && savedContent !== scriptContent) {
-              setScriptContent(savedContent)
-            }
-          }
-        }
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-  }, [currentProject, scriptContent])
-
-  // 页面关闭前强制保存
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (currentProject && scriptContent) {
-        localStorage.setItem(`script_${currentProject.id}`, scriptContent)
-        localStorage.setItem('script_projects', JSON.stringify(projects))
-      }
-    }
-
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [currentProject, scriptContent, projects])
-
-  const handleCreateProject = () => {
-    if (!newProject.title.trim()) return
-
-    const project: ScriptProject = {
-      id: Date.now().toString(),
-      title: newProject.title,
-      description: newProject.description,
-      genre: newProject.genre,
-      targetAudience: newProject.targetAudience,
-      duration: newProject.duration,
-      createdAt: new Date().toISOString(),
-    }
-
-    setProjects([project, ...projects])
-    setCurrentProject(project)
-    setShowCreateModal(false)
-    setNewProject({
-      title: '',
-      description: '',
-      genre: 'drama',
-      targetAudience: '',
-      duration: 5,
-    })
-  }
-
-  const handleDeleteProject = (id: string) => {
-    setProjects(projects.filter(p => p.id !== id))
-    if (currentProject?.id === id) {
-      setCurrentProject(null)
-      setScriptContent('')
-    }
-  }
+  }, [scriptContent, currentScript])
 
   const handleGenerateScript = async () => {
-    if (!currentProject || !aiPrompt.trim()) return
+    if (!currentScript || !aiPrompt.trim()) return
 
     setIsGenerating(true)
     
-    // 模拟AI生成（实际应该调用后端API）
     setTimeout(() => {
-      const generatedScript = generateMockScript(currentProject, aiPrompt)
+      const generatedScript = generateMockScript(currentScript, aiPrompt)
       setScriptContent(generatedScript)
       setIsGenerating(false)
     }, 3000)
-  }
-
-  const handleSaveScript = () => {
-    if (!currentProject) return
-    // 保存到localStorage（实际应该调用后端API）
-    localStorage.setItem(`script_${currentProject.id}`, scriptContent)
-    alert('剧本已保存！')
   }
 
   const handleExportScript = () => {
@@ -238,7 +254,7 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${currentProject?.title || '剧本'}.txt`
+    a.download = `${currentScript?.title || '剧本'}.txt`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -247,7 +263,7 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
 
   return (
     <div className="script-creation-page">
-      {/* 左侧项目列表 */}
+      {/* 左侧剧本列表 */}
       <div className="projects-sidebar">
         <div className="sidebar-header">
           <h2 className="sidebar-title">
@@ -265,7 +281,12 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
         </div>
 
         <div className="projects-list">
-          {projects.length === 0 ? (
+          {isLoading ? (
+            <div className="empty-state">
+              <div className="loading-spinner" />
+              <p>加载中...</p>
+            </div>
+          ) : scripts.length === 0 ? (
             <div className="empty-state">
               <FileText size={48} className="empty-icon" />
               <p>还没有剧本项目</p>
@@ -277,44 +298,74 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
               </button>
             </div>
           ) : (
-            projects.map(project => (
+            scripts.map(script => (
               <motion.div
-                key={project.id}
-                className={`project-card ${currentProject?.id === project.id ? 'active' : ''}`}
-                onClick={() => {
-                  setCurrentProject(project)
-                  const saved = localStorage.getItem(`script_${project.id}`)
-                  setScriptContent(saved || '')
-                }}
+                key={script.id}
+                className={`project-card ${currentScript?.id === script.id ? 'active' : ''}`}
+                onClick={() => handleSelectScript(script)}
                 whileHover={{ x: 4 }}
               >
                 <div className="project-info">
-                  <h3 className="project-title">{project.title}</h3>
+                  <h3 className="project-title">{script.title}</h3>
                   <div className="project-meta">
                     <span 
                       className="genre-badge"
                       style={{ 
-                        backgroundColor: `${GENRES.find(g => g.value === project.genre)?.color}20`,
-                        color: GENRES.find(g => g.value === project.genre)?.color 
+                        backgroundColor: `${GENRES.find(g => g.value === script.genre)?.color}20`,
+                        color: GENRES.find(g => g.value === script.genre)?.color 
                       }}
                     >
-                      {GENRES.find(g => g.value === project.genre)?.label}
+                      {GENRES.find(g => g.value === script.genre)?.label || '剧情'}
                     </span>
                     <span className="duration-badge">
                       <Clock size={12} />
-                      {project.duration}分钟
+                      {script.duration}分钟
                     </span>
                   </div>
                 </div>
-                <button
-                  className="btn-icon btn-ghost"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleDeleteProject(project.id)
-                  }}
-                >
-                  <Trash2 size={16} />
-                </button>
+                
+                {/* 管理菜单按钮 */}
+                <div className="menu-container" ref={menuOpenId === script.id ? menuRef : null}>
+                  <button
+                    className="btn-icon btn-ghost menu-btn"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setMenuOpenId(menuOpenId === script.id ? null : script.id)
+                    }}
+                  >
+                    <MoreVertical size={16} />
+                  </button>
+                  
+                  {/* 下拉菜单 */}
+                  <AnimatePresence>
+                    {menuOpenId === script.id && (
+                      <motion.div
+                        className="dropdown-menu"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                      >
+                        <button
+                          className="menu-item"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleRenameScript(script)
+                          }}
+                        >
+                          <Edit2 size={14} />
+                          重命名
+                        </button>
+                        <button
+                          className="menu-item delete"
+                          onClick={(e) => handleDeleteScript(script.id, e)}
+                        >
+                          <Trash2 size={14} />
+                          删除
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </motion.div>
             ))
           )}
@@ -323,16 +374,16 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
 
       {/* 右侧编辑区域 */}
       <div className="editor-main">
-        {currentProject ? (
+        {currentScript ? (
           <>
             {/* 项目头部 */}
             <div className="editor-header">
               <div className="project-header-info">
-                {/* 返回按钮 - 返回到项目列表 */}
+                {/* 返回按钮 - 返回到剧本列表 */}
                 <motion.button
                   className="btn-back"
                   onClick={() => {
-                    setCurrentProject(null)
+                    setCurrentScript(null)
                     setScriptContent('')
                   }}
                   whileHover={{ x: -4 }}
@@ -341,8 +392,8 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
                   <ArrowLeft size={18} />
                   返回
                 </motion.button>
-                <h1 className="project-header-title">{currentProject.title}</h1>
-                <p className="project-header-desc">{currentProject.description}</p>
+                <h1 className="project-header-title">{currentScript.title}</h1>
+                <p className="project-header-desc">{currentScript.description}</p>
               </div>
               <div className="editor-actions">
                 {/* 保存状态指示器 */}
@@ -373,13 +424,6 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
                 >
                   <Download size={16} />
                   导出
-                </button>
-                <button 
-                  className="btn-primary"
-                  onClick={handleSaveScript}
-                >
-                  <Save size={16} />
-                  保存
                 </button>
               </div>
             </div>
@@ -563,16 +607,84 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
                 </button>
                 <button 
                   className="btn-primary"
-                  onClick={handleCreateProject}
-                  disabled={!newProject.title.trim()}
+                  onClick={handleCreateScript}
+                  disabled={!newProject.title.trim() || isLoading}
                 >
-                  创建项目
+                  {isLoading ? <div className="loading-spinner" /> : '创建项目'}
                 </button>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* 重命名模态框 */}
+      <AnimatePresence>
+        {showRenameModal && (
+          <motion.div
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowRenameModal(false)}
+          >
+            <motion.div
+              className="modal-content"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="modal-title">重命名剧本</h2>
+              
+              <div className="form-group">
+                <label>新标题</label>
+                <input
+                  type="text"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="输入新标题"
+                  className="input-glass"
+                  autoFocus
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button 
+                  className="btn-secondary"
+                  onClick={() => {
+                    setShowRenameModal(false)
+                    setScriptToRename(null)
+                    setNewTitle('')
+                  }}
+                >
+                  取消
+                </button>
+                <button 
+                  className="btn-primary"
+                  onClick={handleConfirmRename}
+                  disabled={!newTitle.trim()}
+                >
+                  确认
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 错误提示 */}
+      {error && (
+        <motion.div
+          className="error-toast"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+        >
+          {error}
+          <button onClick={() => setError('')}>×</button>
+        </motion.div>
+      )}
 
       {/* 样式 */}
       <style>{`
@@ -624,6 +736,7 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
           border-radius: var(--card-border-radius);
           cursor: pointer;
           transition: all 0.2s ease;
+          position: relative;
         }
 
         .project-card:hover,
@@ -634,6 +747,7 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
 
         .project-info {
           flex: 1;
+          min-width: 0;
         }
 
         .project-title {
@@ -641,6 +755,9 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
           font-weight: var(--font-medium);
           color: var(--text-primary);
           margin-bottom: var(--space-1);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .project-meta {
@@ -656,6 +773,62 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
           padding: 2px 8px;
           border-radius: 4px;
           font-size: var(--text-xs);
+        }
+
+        .menu-container {
+          position: relative;
+        }
+
+        .menu-btn {
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+
+        .project-card:hover .menu-btn,
+        .menu-btn.active {
+          opacity: 1;
+        }
+
+        .dropdown-menu {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          margin-top: 4px;
+          background: var(--bg-secondary);
+          border: 1px solid var(--glass-border);
+          border-radius: 8px;
+          padding: var(--space-1);
+          min-width: 120px;
+          z-index: 100;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .menu-item {
+          display: flex;
+          align-items: center;
+          gap: var(--space-2);
+          width: 100%;
+          padding: var(--space-2) var(--space-3);
+          background: transparent;
+          border: none;
+          border-radius: 4px;
+          color: var(--text-secondary);
+          font-size: var(--text-sm);
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .menu-item:hover {
+          background: var(--glass-bg);
+          color: var(--text-primary);
+        }
+
+        .menu-item.delete {
+          color: var(--accent-red);
+        }
+
+        .menu-item.delete:hover {
+          background: rgba(255, 59, 48, 0.1);
         }
 
         .editor-main {
@@ -918,12 +1091,6 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
           animation: spin 0.8s linear infinite;
         }
 
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
         .btn-back {
           display: flex;
           align-items: center;
@@ -944,23 +1111,51 @@ export default function ScriptCreation({ onBack }: ScriptCreationProps) {
           border-color: var(--accent-blue);
           color: var(--accent-blue);
         }
+
+        .error-toast {
+          position: fixed;
+          bottom: var(--space-4);
+          right: var(--space-4);
+          padding: var(--space-3) var(--space-4);
+          background: rgba(255, 59, 48, 0.9);
+          border-radius: 8px;
+          color: white;
+          display: flex;
+          align-items: center;
+          gap: var(--space-3);
+          z-index: 200;
+        }
+
+        .error-toast button {
+          background: none;
+          border: none;
+          color: white;
+          font-size: 18px;
+          cursor: pointer;
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
       `}</style>
     </div>
   )
 }
 
 // 模拟AI生成剧本
-function generateMockScript(project: ScriptProject, prompt: string): string {
-  return `${project.title}
+function generateMockScript(script: Script, prompt: string): string {
+  return `${script.title}
 
-类型：${GENRES.find(g => g.value === project.genre)?.label}
-目标时长：${project.duration}分钟
-目标受众：${project.targetAudience || '通用观众'}
+类型：${script.genre || '剧情'}
+目标时长：${script.duration}分钟
+目标受众：${script.target_audience || '通用观众'}
 
 === 场景1：开头 ===
 
 [画面描述]
-镜头缓缓推进，展现主要场景。环境氛围${project.genre === 'horror' ? '阴森恐怖' : project.genre === 'romance' ? '浪漫温馨' : '引人入胜'}。
+镜头缓缓推进，展现主要场景。环境氛围引人入胜。
 
 主角A：（独白）
 ${prompt}...
