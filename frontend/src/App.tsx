@@ -190,7 +190,7 @@ function App() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
                   >
-                    欢迎回来，创作者 👋 (Auto Deploy Test)
+                    欢迎回来，创作者 👋 [Deployed: 2025-02-09]
                   </motion.h1>
                   <motion.p
                     initial={{ opacity: 0, y: 20 }}
