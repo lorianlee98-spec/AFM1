@@ -1,8 +1,11 @@
 # AI视频制片链路系统 - UI/UX 设计系统
 
-**版本**: 1.0  
+**版本**: 1.1  
 **日期**: 2026-02-09  
 **风格**: Apple Pro + Dark Mode + Glassmorphism
+
+**更新记录**:
+- v1.1 (2026-02-09): 更新导航项为毛玻璃设计，优化未选中状态颜色，品牌名称更新为 AMF.io
 
 ---
 
@@ -329,36 +332,72 @@
 }
 ```
 
-### 5.6 导航项 (Nav Item)
+### 5.6 导航项 - 毛玻璃设计 (Nav Item Glass)
+
+**设计原则**:
+- 未选中状态使用低饱和度颜色，避免与深色背景冲突
+- 悬停时显示毛玻璃背景效果
+- 选中状态使用渐变背景 + 发光阴影
 
 ```css
-.nav-item {
+.nav-item-glass {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 16px;
-  margin: 2px 8px;
-  border-radius: 8px;
-  color: var(--text-secondary);
-  font-size: var(--text-base);
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.nav-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text-primary);
+/* 未选中状态 - 低饱和度颜色 */
+.nav-item-glass .nav-icon {
+  color: var(--text-tertiary);  /* 50% 白色 */
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
-.nav-item.active {
-  background: var(--accent-blue);
+.nav-item-glass span {
+  color: var(--text-secondary);  /* 70% 白色 */
+  font-size: var(--text-base);
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+/* 悬停状态 - 毛玻璃效果 */
+.nav-item-glass:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.nav-item-glass:hover .nav-icon {
+  transform: scale(1.1);
+}
+
+/* 选中状态 - 渐变背景 + 发光 */
+.nav-item-glass.active {
+  background: linear-gradient(135deg, rgba(10, 132, 255, 0.15) 0%, rgba(191, 90, 242, 0.15) 100%);
+  border-color: rgba(10, 132, 255, 0.3);
+  box-shadow: 
+    0 4px 24px rgba(10, 132, 255, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.nav-item-glass.active .nav-icon,
+.nav-item-glass.active span {
   color: white;
 }
-
-.nav-item.active:hover {
-  background: var(--accent-blue-light);
-}
 ```
+
+**颜色状态表**:
+
+| 状态 | 图标颜色 | 文字颜色 | 背景 |
+|------|----------|----------|------|
+| 未选中 | `var(--text-tertiary)` | `var(--text-secondary)` | 透明 |
+| 悬停 | `var(--text-tertiary)` | `var(--text-secondary)` | 毛玻璃 + 模糊 |
+| 选中 | 纯白 `#ffffff` | 纯白 `#ffffff` | 蓝紫渐变 + 发光阴影 |
 
 ### 5.7 标签 (Tag)
 
@@ -591,7 +630,7 @@
 | 卡片 | 上浮4px, 阴影增强 | - | 选中边框 |
 | 列表项 | 背景高亮 | - | 拖拽排序 |
 | 输入框 | - | 边框聚焦, 发光 | 错误抖动 |
-| 导航项 | 背景高亮 | 激活指示器 | - |
+| 导航项(毛玻璃) | 毛玻璃背景+图标缩放 | 渐变背景+发光 | 图标颜色过渡 |
 | 图标按钮 | 缩放1.1, 颜色变化 | 缩放0.95 | - |
 
 ### 9.2 手势支持
@@ -630,13 +669,24 @@
 - 第三方登录选项
 - 注册链接
 
-### 10.2 仪表盘页面
+### 10.2 仪表盘页面 (首页)
 
-- 欢迎语 + 用户头像
-- 项目网格（玻璃卡片）
-- 新建项目按钮（悬浮）
-- 最近活动列表
-- 快捷操作区
+**布局结构**:
+- 左侧边栏导航（毛玻璃设计导航项）
+- 顶部栏：搜索 + 通知 + 设置 + 用户头像
+- 主内容区：
+  - 欢迎区域：欢迎语 + 副标题 + 创建项目按钮
+  - 工作流程：6个功能模块卡片（玻璃卡片）
+
+**品牌标识**:
+- Logo: 渐变背景 + Film图标 + Sparkles装饰
+- 品牌名称: **AMF.io**
+
+**导航设计**:
+- 使用 `nav-item-glass` 毛玻璃导航项
+- 未选中：图标 `text-tertiary`，文字 `text-secondary`
+- 悬停：毛玻璃背景 + 模糊效果
+- 选中：蓝紫渐变背景 + 发光阴影
 
 ### 10.3 剧本创作页面
 
@@ -761,4 +811,5 @@ import { motion } from 'framer-motion';
 | 日期 | 版本 | 变更 |
 |------|------|------|
 | 2026-02-09 | 1.0 | 初始版本 |
+| 2026-02-09 | 1.1 | 更新导航项为毛玻璃设计，优化未选中状态颜色为 `text-tertiary`，品牌名称更新为 **AMF.io**，移除"核心优势"板块 |
 
