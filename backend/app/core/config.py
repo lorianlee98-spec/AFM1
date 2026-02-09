@@ -34,12 +34,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     ALGORITHM: str = "HS256"
     
-    # CORS配置
-    ALLOWED_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "https://your-frontend.vercel.app",  # 替换为实际的前端域名
-    ]
+    # CORS配置 - 使用字符串形式，通过validator解析
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
     
     # AI服务API配置
     # 文心一言

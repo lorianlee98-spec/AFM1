@@ -41,10 +41,13 @@ app = FastAPI(
     redoc_url="/redoc",  # 替代API文档
 )
 
+# 解析CORS允许的源
+allow_origins = [origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()]
+
 # 配置CORS中间件
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
