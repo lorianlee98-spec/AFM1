@@ -37,6 +37,32 @@ export default function Login() {
     setError('')
   }
 
+  const handleTestAccountLogin = async (email: string, password: string) => {
+    setIsLoading(true)
+    setError('')
+
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
+
+    try {
+      const formDataObj = new URLSearchParams()
+      formDataObj.append('username', email)
+      formDataObj.append('password', password)
+      
+      const response = await axios.post<LoginResponse>(`${API_BASE_URL}/auth/login`, formDataObj, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      })
+      localStorage.setItem('auth_token', response.data.access_token)
+      localStorage.setItem('refresh_token', response.data.refresh_token)
+      window.location.href = '/'
+    } catch (err: any) {
+      setError(err.response?.data?.detail || '测试账号登录失败')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -82,7 +108,20 @@ export default function Login() {
       // 登录成功，跳转到首页
       window.location.href = '/'
     } catch (err: any) {
-      setError(err.response?.data?.detail || '登录失败，请检查邮箱和密码')
+      const errorDetail = err.response?.data?.detail
+      if (isRegister) {
+        // 注册时的错误提示
+        if (errorDetail?.includes('Email already registered')) {
+          setError('该邮箱已被注册，请使用其他邮箱或直接登录')
+        } else if (errorDetail?.includes('Username already taken')) {
+          setError('该用户名已被使用，请更换用户名')
+        } else {
+          setError(errorDetail || '注册失败，请稍后重试')
+        }
+      } else {
+        // 登录时的错误提示
+        setError(errorDetail || '登录失败，请检查邮箱和密码')
+      }
     } finally {
       setIsLoading(false)
     }
@@ -227,34 +266,43 @@ export default function Login() {
             <span>或使用以下方式</span>
           </div>
 
-          {/* 第三方登录 */}
-          <div className="social-login">
-            <motion.button
-              type="button"
-              className="btn-secondary btn-social"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <svg viewBox="0 0 24 24" width="20" height="20">
-                <path
-                  fill="currentColor"
-                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                />
-                <path
-                  fill="currentColor"
-                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                />
-              </svg>
-              Google
-            </motion.button>
+          {/* 测试账号快速登录 */}
+          <div className="test-accounts-section">
+            <div className="divider">
+              <span>测试账号快速登录</span>
+            </div>
+            <div className="test-accounts-grid">
+              <motion.button
+                type="button"
+                className="btn-test-account"
+                onClick={() => handleTestAccountLogin('test@afm.io', 'Test123456!')}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className="test-account-role">用户</span>
+                <span className="test-account-email">test@afm.io</span>
+              </motion.button>
+              <motion.button
+                type="button"
+                className="btn-test-account"
+                onClick={() => handleTestAccountLogin('admin@afm.io', 'Admin123456!')}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className="test-account-role">管理员</span>
+                <span className="test-account-email">admin@afm.io</span>
+              </motion.button>
+              <motion.button
+                type="button"
+                className="btn-test-account"
+                onClick={() => handleTestAccountLogin('guest@afm.io', 'Guest123456!')}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className="test-account-role">访客</span>
+                <span className="test-account-email">guest@afm.io</span>
+              </motion.button>
+            </div>
           </div>
         </motion.div>
 
@@ -517,6 +565,45 @@ export default function Login() {
           margin-top: var(--space-6);
           font-size: var(--text-xs);
           color: var(--text-quaternary);
+        }
+
+        .test-accounts-section {
+          margin-top: var(--space-4);
+        }
+
+        .test-accounts-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: var(--space-2);
+        }
+
+        .btn-test-account {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: var(--space-1);
+          padding: var(--space-3);
+          background: var(--glass-bg);
+          border: 1px solid var(--glass-border);
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .btn-test-account:hover {
+          background: rgba(10, 132, 255, 0.1);
+          border-color: rgba(10, 132, 255, 0.3);
+        }
+
+        .test-account-role {
+          font-size: var(--text-xs);
+          font-weight: var(--font-medium);
+          color: var(--accent-blue);
+        }
+
+        .test-account-email {
+          font-size: var(--text-xs);
+          color: var(--text-tertiary);
         }
 
         @media (max-width: 480px) {
