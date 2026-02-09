@@ -22,6 +22,7 @@ import {
   Sparkles
 } from 'lucide-react'
 import Login from './pages/Login'
+import ScriptCreation from './pages/ScriptCreation'
 import './styles/theme.css'
 import './styles/components.css'
 
@@ -207,6 +208,7 @@ function App() {
                     className="btn-primary btn-large"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    onClick={() => setActiveNav('script')}
                   >
                     <Plus size={20} />
                     创建新项目
@@ -227,6 +229,10 @@ function App() {
                           transition={{ delay: 0.1 * index }}
                           className="workflow-card glass-card"
                           whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                          onClick={() => {
+                            if (step.title === '剧本创作') setActiveNav('script')
+                          }}
+                          style={{ cursor: step.title === '剧本创作' ? 'pointer' : 'default' }}
                         >
                           <div 
                             className="workflow-icon"
@@ -246,7 +252,9 @@ function App() {
               </div>
             )}
 
-            {activeNav !== 'home' && (
+            {activeNav === 'script' && <ScriptCreation />}
+
+            {activeNav !== 'home' && activeNav !== 'script' && (
               <div className="placeholder-page">
                 <div className="placeholder-content">
                   <Sparkles size={48} color="var(--accent-purple)" />
