@@ -6,7 +6,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Film, Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react'
-import { api } from '../api/client'
+import axios from 'axios'
 import '../styles/theme.css'
 import '../styles/components.css'
 
@@ -42,29 +42,41 @@ export default function Login() {
     setIsLoading(true)
     setError('')
 
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
+
     try {
       if (isRegister) {
-        // 注册逻辑
-        await api.post('/api/v1/auth/register', {
+        // 注册逻辑 - 使用JSON
+        await axios.post(`${API_BASE_URL}/auth/register`, {
           email: formData.email,
           username: formData.email.split('@')[0],
           password: formData.password,
         })
-        // 注册成功后自动登录
-        const response = await api.post<LoginResponse>('/api/v1/auth/login', {
-          username: formData.email,
-          password: formData.password,
+        // 注册成功后自动登录 - 使用表单数据
+        const formDataObj = new URLSearchParams()
+        formDataObj.append('username', formData.email)
+        formDataObj.append('password', formData.password)
+        
+        const response = await axios.post<LoginResponse>(`${API_BASE_URL}/auth/login`, formDataObj, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
         })
-        localStorage.setItem('auth_token', response.access_token)
-        localStorage.setItem('refresh_token', response.refresh_token)
+        localStorage.setItem('auth_token', response.data.access_token)
+        localStorage.setItem('refresh_token', response.data.refresh_token)
       } else {
-        // 登录逻辑
-        const response = await api.post<LoginResponse>('/api/v1/auth/login', {
-          username: formData.email,
-          password: formData.password,
+        // 登录逻辑 - 使用表单数据
+        const formDataObj = new URLSearchParams()
+        formDataObj.append('username', formData.email)
+        formDataObj.append('password', formData.password)
+        
+        const response = await axios.post<LoginResponse>(`${API_BASE_URL}/auth/login`, formDataObj, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
         })
-        localStorage.setItem('auth_token', response.access_token)
-        localStorage.setItem('refresh_token', response.refresh_token)
+        localStorage.setItem('auth_token', response.data.access_token)
+        localStorage.setItem('refresh_token', response.data.refresh_token)
       }
       
       // 登录成功，跳转到首页
