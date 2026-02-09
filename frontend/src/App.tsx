@@ -1,160 +1,599 @@
-import { Layout, Menu, Typography, Card, Row, Col, Button } from 'antd'
-import {
-  HomeOutlined,
-  FileTextOutlined,
-  PictureOutlined,
-  UserOutlined,
-  SoundOutlined,
-  VideoCameraOutlined,
-  ExportOutlined,
-} from '@ant-design/icons'
-import './App.css'
+/**
+ * 主应用组件
+ * 使用简单的状态管理来切换登录页面和主应用
+ */
 
-const { Header, Content, Footer, Sider } = Layout
-const { Title, Paragraph } = Typography
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { 
+  Film, 
+  Home, 
+  FileText, 
+  Image, 
+  Users, 
+  Music, 
+  Video, 
+  Download,
+  Plus,
+  Search,
+  Bell,
+  Settings,
+  LogOut,
+  Sparkles
+} from 'lucide-react'
+import Login from './pages/Login'
+import './styles/theme.css'
+import './styles/components.css'
 
 // 工作流程步骤
 const workflowSteps = [
   {
     title: '剧本创作',
-    icon: <FileTextOutlined />,
+    icon: FileText,
     description: '基于AI生成标准格式剧本',
-    color: '#1890ff',
+    color: 'var(--accent-blue)',
   },
   {
     title: '分镜制作',
-    icon: <PictureOutlined />,
+    icon: Image,
     description: '自动生成视觉化分镜图',
-    color: '#52c41a',
+    color: 'var(--accent-green)',
   },
   {
     title: '人设制作',
-    icon: <UserOutlined />,
+    icon: Users,
     description: '创建一致性的角色形象',
-    color: '#722ed1',
+    color: 'var(--accent-purple)',
   },
   {
     title: '音频生成',
-    icon: <SoundOutlined />,
+    icon: Music,
     description: '生成旁白和配乐',
-    color: '#eb2f96',
+    color: 'var(--accent-orange)',
   },
   {
     title: '视频生成',
-    icon: <VideoCameraOutlined />,
+    icon: Video,
     description: '基于分镜生成视频片段',
-    color: '#fa8c16',
+    color: 'var(--accent-red)',
   },
   {
     title: '成片输出',
-    icon: <ExportOutlined />,
+    icon: Download,
     description: '导出到剪映进行后期制作',
-    color: '#13c2c2',
+    color: 'var(--accent-yellow)',
   },
 ]
 
+// 导航项
+const navItems = [
+  { key: 'home', icon: Home, label: '首页' },
+  { key: 'script', icon: FileText, label: '剧本创作' },
+  { key: 'storyboard', icon: Image, label: '分镜制作' },
+  { key: 'character', icon: Users, label: '人设制作' },
+  { key: 'audio', icon: Music, label: '音频生成' },
+  { key: 'video', icon: Video, label: '视频生成' },
+  { key: 'export', icon: Download, label: '成片输出' },
+]
+
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [activeNav, setActiveNav] = useState('home')
+  const [isLoading, setIsLoading] = useState(true)
+
+  // 检查登录状态
+  useEffect(() => {
+    const token = localStorage.getItem('auth_token')
+    setIsAuthenticated(!!token)
+    setIsLoading(false)
+  }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token')
+    localStorage.removeItem('refresh_token')
+    setIsAuthenticated(false)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner-large" />
+      </div>
+    )
+  }
+
+  // 未登录显示登录页面
+  if (!isAuthenticated) {
+    return <Login />
+  }
+
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <div className="app-container">
       {/* 侧边栏 */}
-      <Sider theme="light" width={200}>
-        <div style={{ padding: '16px', textAlign: 'center' }}>
-          <Title level={4} style={{ margin: 0 }}>
-            AI视频制片
-          </Title>
+      <aside className="sidebar">
+        <div className="sidebar-header">
+          <div className="logo">
+            <Film size={28} />
+            <Sparkles size={14} className="logo-sparkle" />
+          </div>
+          <span className="logo-text">AI制片</span>
         </div>
-        <Menu
-          mode="inline"
-          defaultSelectedKeys={['home']}
-          items={[
-            { key: 'home', icon: <HomeOutlined />, label: '首页' },
-            { key: 'script', icon: <FileTextOutlined />, label: '剧本创作' },
-            { key: 'storyboard', icon: <PictureOutlined />, label: '分镜制作' },
-            { key: 'character', icon: <UserOutlined />, label: '人设制作' },
-            { key: 'audio', icon: <SoundOutlined />, label: '音频生成' },
-            { key: 'video', icon: <VideoCameraOutlined />, label: '视频生成' },
-            { key: 'export', icon: <ExportOutlined />, label: '成片输出' },
-          ]}
-        />
-      </Sider>
+
+        <nav className="sidebar-nav">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <button
+                key={item.key}
+                className={`nav-item ${activeNav === item.key ? 'active' : ''}`}
+                onClick={() => setActiveNav(item.key)}
+              >
+                <Icon size={20} />
+                <span>{item.label}</span>
+              </button>
+            )
+          })}
+        </nav>
+
+        <div className="sidebar-footer">
+          <button className="nav-item" onClick={handleLogout}>
+            <LogOut size={20} />
+            <span>退出登录</span>
+          </button>
+        </div>
+      </aside>
 
       {/* 主内容区 */}
-      <Layout>
-        <Header style={{ background: '#fff', padding: '0 24px' }}>
-          <Title level={3} style={{ margin: '16px 0' }}>
-            AI视频制片链路系统
-          </Title>
-        </Header>
-
-        <Content style={{ margin: '24px', padding: '24px', background: '#fff' }}>
-          {/* 欢迎区域 */}
-          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <Title level={2}>欢迎使用 AI视频制片链路系统</Title>
-            <Paragraph style={{ fontSize: '16px', color: '#666' }}>
-              通过简单的文字描述，快速生成专业级视频内容
-            </Paragraph>
-            <Button type="primary" size="large" style={{ marginTop: '16px' }}>
-              创建新项目
-            </Button>
+      <main className="main-content">
+        {/* 顶部栏 */}
+        <header className="top-bar">
+          <div className="search-bar">
+            <Search size={18} />
+            <input type="text" placeholder="搜索项目..." />
           </div>
+          <div className="top-bar-actions">
+            <button className="btn-icon">
+              <Bell size={20} />
+            </button>
+            <button className="btn-icon">
+              <Settings size={20} />
+            </button>
+            <div className="user-avatar">
+              <span>U</span>
+            </div>
+          </div>
+        </header>
 
-          {/* 工作流程展示 */}
-          <Title level={3} style={{ marginBottom: '24px' }}>
-            工作流程
-          </Title>
-          <Row gutter={[16, 16]}>
-            {workflowSteps.map((step, index) => (
-              <Col xs={24} sm={12} lg={8} key={index}>
-                <Card
-                  hoverable
-                  style={{ borderTop: `4px solid ${step.color}` }}
-                >
-                  <div style={{ textAlign: 'center' }}>
-                    <div
-                      style={{
-                        fontSize: '48px',
-                        color: step.color,
-                        marginBottom: '16px',
-                      }}
-                    >
-                      {step.icon}
-                    </div>
-                    <Title level={4}>{step.title}</Title>
-                    <Paragraph type="secondary">{step.description}</Paragraph>
+        {/* 页面内容 */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeNav}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="page-content"
+          >
+            {activeNav === 'home' && (
+              <div className="home-page">
+                {/* 欢迎区域 */}
+                <section className="hero-section">
+                  <motion.h1
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    欢迎回来，创作者 👋
+                  </motion.h1>
+                  <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="hero-subtitle"
+                  >
+                    通过简单的文字描述，快速生成专业级视频内容
+                  </motion.p>
+                  <motion.button
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="btn-primary btn-large"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Plus size={20} />
+                    创建新项目
+                  </motion.button>
+                </section>
+
+                {/* 工作流程展示 */}
+                <section className="workflow-section">
+                  <h2>工作流程</h2>
+                  <div className="workflow-grid">
+                    {workflowSteps.map((step, index) => {
+                      const Icon = step.icon
+                      return (
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.1 * index }}
+                          className="workflow-card glass-card"
+                          whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                        >
+                          <div 
+                            className="workflow-icon"
+                            style={{ color: step.color }}
+                          >
+                            <Icon size={32} />
+                          </div>
+                          <h3>{step.title}</h3>
+                          <p>{step.description}</p>
+                        </motion.div>
+                      )
+                    })}
                   </div>
-                </Card>
-              </Col>
-            ))}
-          </Row>
+                </section>
 
-          {/* 功能特点 */}
-          <Title level={3} style={{ marginTop: '48px', marginBottom: '24px' }}>
-            核心优势
-          </Title>
-          <Row gutter={[16, 16]}>
-            <Col span={8}>
-              <Card title="端到端自动化" bordered={false}>
-                从剧本到成片，全流程AI驱动，大幅降低制作门槛
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card title="智能链路整合" bordered={false}>
-                各模块数据自动传递，无缝协作，提升制作效率
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card title="高度可控性" bordered={false}>
-                在自动化的同时，保持用户对每个环节的干预能力
-              </Card>
-            </Col>
-          </Row>
-        </Content>
+                {/* 核心优势 */}
+                <section className="features-section">
+                  <h2>核心优势</h2>
+                  <div className="features-grid">
+                    {[
+                      {
+                        title: '端到端自动化',
+                        desc: '从剧本到成片，全流程AI驱动，大幅降低制作门槛',
+                      },
+                      {
+                        title: '智能链路整合',
+                        desc: '各模块数据自动传递，无缝协作，提升制作效率',
+                      },
+                      {
+                        title: '高度可控性',
+                        desc: '在自动化的同时，保持用户对每个环节的干预能力',
+                      },
+                    ].map((feature, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 + 0.1 * index }}
+                        className="feature-card glass-card"
+                      >
+                        <h3>{feature.title}</h3>
+                        <p>{feature.desc}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+            )}
 
-        <Footer style={{ textAlign: 'center' }}>
-          AI视频制片链路系统 ©2026 Created by AI Team
-        </Footer>
-      </Layout>
-    </Layout>
+            {activeNav !== 'home' && (
+              <div className="placeholder-page">
+                <div className="placeholder-content">
+                  <Sparkles size={48} color="var(--accent-purple)" />
+                  <h2>功能开发中</h2>
+                  <p>该功能正在紧锣密鼓地开发中，敬请期待...</p>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      {/* 内联样式 */}
+      <style>{`
+        .app-container {
+          display: flex;
+          min-height: 100vh;
+          background: var(--bg-primary);
+        }
+
+        /* 加载屏幕 */
+        .loading-screen {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: var(--bg-primary);
+        }
+
+        .loading-spinner-large {
+          width: 48px;
+          height: 48px;
+          border: 3px solid var(--glass-border);
+          border-top-color: var(--accent-blue);
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+          width: 240px;
+          background: var(--bg-secondary);
+          border-right: 1px solid var(--glass-border);
+          display: flex;
+          flex-direction: column;
+          position: fixed;
+          height: 100vh;
+          z-index: 100;
+        }
+
+        .sidebar-header {
+          padding: var(--space-5);
+          display: flex;
+          align-items: center;
+          gap: var(--space-3);
+          border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo {
+          width: 40px;
+          height: 40px;
+          background: var(--gradient-accent);
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          position: relative;
+        }
+
+        .logo-sparkle {
+          position: absolute;
+          top: -2px;
+          right: -2px;
+          color: var(--accent-yellow);
+        }
+
+        .logo-text {
+          font-size: var(--text-lg);
+          font-weight: var(--font-bold);
+          color: var(--text-primary);
+        }
+
+        .sidebar-nav {
+          flex: 1;
+          padding: var(--space-3);
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-1);
+        }
+
+        .sidebar-footer {
+          padding: var(--space-3);
+          border-top: 1px solid var(--glass-border);
+        }
+
+        /* 主内容区 */
+        .main-content {
+          flex: 1;
+          margin-left: 240px;
+          display: flex;
+          flex-direction: column;
+        }
+
+        /* 顶部栏 */
+        .top-bar {
+          height: 64px;
+          background: var(--bg-secondary);
+          border-bottom: 1px solid var(--glass-border);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 var(--space-6);
+          position: sticky;
+          top: 0;
+          z-index: 50;
+        }
+
+        .search-bar {
+          display: flex;
+          align-items: center;
+          gap: var(--space-2);
+          background: var(--bg-elevated);
+          border: 1px solid var(--glass-border);
+          border-radius: 8px;
+          padding: 8px 16px;
+          width: 320px;
+          color: var(--text-tertiary);
+        }
+
+        .search-bar input {
+          background: transparent;
+          border: none;
+          outline: none;
+          color: var(--text-primary);
+          font-size: var(--text-base);
+          width: 100%;
+        }
+
+        .search-bar input::placeholder {
+          color: var(--text-tertiary);
+        }
+
+        .top-bar-actions {
+          display: flex;
+          align-items: center;
+          gap: var(--space-2);
+        }
+
+        .user-avatar {
+          width: 36px;
+          height: 36px;
+          background: var(--gradient-accent);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-weight: var(--font-semibold);
+          font-size: var(--text-sm);
+          margin-left: var(--space-2);
+        }
+
+        /* 页面内容 */
+        .page-content {
+          flex: 1;
+          padding: var(--space-6);
+          overflow-y: auto;
+        }
+
+        /* 首页 */
+        .home-page {
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        .hero-section {
+          text-align: center;
+          padding: var(--space-10) 0;
+        }
+
+        .hero-section h1 {
+          font-size: var(--text-3xl);
+          font-weight: var(--font-bold);
+          color: var(--text-primary);
+          margin-bottom: var(--space-3);
+        }
+
+        .hero-subtitle {
+          font-size: var(--text-lg);
+          color: var(--text-secondary);
+          margin-bottom: var(--space-6);
+        }
+
+        .btn-large {
+          padding: 14px 28px;
+          font-size: var(--text-lg);
+        }
+
+        /* 工作流程 */
+        .workflow-section {
+          margin-top: var(--space-8);
+        }
+
+        .workflow-section h2 {
+          font-size: var(--text-xl);
+          font-weight: var(--font-semibold);
+          color: var(--text-primary);
+          margin-bottom: var(--space-5);
+        }
+
+        .workflow-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: var(--space-4);
+        }
+
+        .workflow-card {
+          padding: var(--space-6);
+          text-align: center;
+          cursor: pointer;
+        }
+
+        .workflow-icon {
+          margin-bottom: var(--space-3);
+        }
+
+        .workflow-card h3 {
+          font-size: var(--text-lg);
+          font-weight: var(--font-semibold);
+          color: var(--text-primary);
+          margin-bottom: var(--space-2);
+        }
+
+        .workflow-card p {
+          font-size: var(--text-sm);
+          color: var(--text-secondary);
+        }
+
+        /* 核心优势 */
+        .features-section {
+          margin-top: var(--space-10);
+        }
+
+        .features-section h2 {
+          font-size: var(--text-xl);
+          font-weight: var(--font-semibold);
+          color: var(--text-primary);
+          margin-bottom: var(--space-5);
+        }
+
+        .features-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: var(--space-4);
+        }
+
+        .feature-card {
+          padding: var(--space-5);
+        }
+
+        .feature-card h3 {
+          font-size: var(--text-base);
+          font-weight: var(--font-semibold);
+          color: var(--text-primary);
+          margin-bottom: var(--space-2);
+        }
+
+        .feature-card p {
+          font-size: var(--text-sm);
+          color: var(--text-secondary);
+          line-height: 1.6;
+        }
+
+        /* 占位页面 */
+        .placeholder-page {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 60vh;
+        }
+
+        .placeholder-content {
+          text-align: center;
+        }
+
+        .placeholder-content h2 {
+          font-size: var(--text-2xl);
+          font-weight: var(--font-semibold);
+          color: var(--text-primary);
+          margin: var(--space-4) 0 var(--space-2);
+        }
+
+        .placeholder-content p {
+          font-size: var(--text-base);
+          color: var(--text-secondary);
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+          .features-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+        }
+
+        @media (max-width: 768px) {
+          .sidebar {
+            transform: translateX(-100%);
+          }
+
+          .main-content {
+            margin-left: 0;
+          }
+
+          .features-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .search-bar {
+            width: 200px;
+          }
+        }
+      `}</style>
+    </div>
   )
 }
 
