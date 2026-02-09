@@ -17,7 +17,9 @@ import {
   Wand2,
   Clock,
   Tag,
-  MoreVertical
+  MoreVertical,
+  Check,
+  AlertCircle
 } from 'lucide-react'
 import axios from 'axios'
 import '../styles/theme.css'
@@ -62,6 +64,8 @@ export default function ScriptCreation() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor')
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
 
   // 新项目表单
   const [newProject, setNewProject] = useState({
@@ -88,6 +92,24 @@ export default function ScriptCreation() {
   useEffect(() => {
     localStorage.setItem('script_projects', JSON.stringify(projects))
   }, [projects])
+
+  // 自动保存剧本内容
+  useEffect(() => {
+    if (!currentProject) return
+    
+    const saveContent = () => {
+      setSaveStatus('saving')
+      localStorage.setItem(`script_${currentProject.id}`, scriptContent)
+      setSaveStatus('saved')
+      setLastSaved(new Date())
+    }
+
+    // 延迟保存，避免频繁写入
+    const timeoutId = setTimeout(saveContent, 1000)
+    setSaveStatus('unsaved')
+    
+    return () => clearTimeout(timeoutId)
+  }, [scriptContent, currentProject])
 
   const handleCreateProject = () => {
     if (!newProject.title.trim()) return
@@ -243,6 +265,27 @@ export default function ScriptCreation() {
                 <p className="project-header-desc">{currentProject.description}</p>
               </div>
               <div className="editor-actions">
+                {/* 保存状态指示器 */}
+                <div className="save-status-indicator">
+                  {saveStatus === 'saving' && (
+                    <span className="status-saving">
+                      <div className="loading-spinner-small" />
+                      保存中...
+                    </span>
+                  )}
+                  {saveStatus === 'saved' && lastSaved && (
+                    <span className="status-saved">
+                      <Check size={14} />
+                      已保存 {lastSaved.toLocaleTimeString()}
+                    </span>
+                  )}
+                  {saveStatus === 'unsaved' && (
+                    <span className="status-unsaved">
+                      <AlertCircle size={14} />
+                      未保存
+                    </span>
+                  )}
+                </div>
                 <button 
                   className="btn-secondary"
                   onClick={handleExportScript}
@@ -755,6 +798,50 @@ export default function ScriptCreation() {
         .empty-preview {
           text-align: center;
           padding: var(--space-12);
+        }
+
+        .save-status-indicator {
+          display: flex;
+          align-items: center;
+          gap: var(--space-2);
+          font-size: var(--text-xs);
+          margin-right: var(--space-3);
+        }
+
+        .status-saving {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: var(--accent-blue);
+        }
+
+        .status-saved {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: var(--accent-green);
+        }
+
+        .status-unsaved {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: var(--accent-orange);
+        }
+
+        .loading-spinner-small {
+          width: 12px;
+          height: 12px;
+          border: 2px solid var(--glass-border);
+          border-top-color: var(--accent-blue);
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
         }
       `}</style>
     </div>
