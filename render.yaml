@@ -13,14 +13,14 @@ services:
       - key: DEBUG
         value: false
       - key: APP_NAME
-        value: AI视频制片链路系统
+        value: "AI视频制片链路系统"
       - key: APP_VERSION
-        value: 0.1.0
+        value: "0.1.0"
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
-        value: 30
+        value: "30"
       - key: REFRESH_TOKEN_EXPIRE_DAYS
-        value: 7
+        value: "7"
       - key: ALGORITHM
-        value: HS256
+        value: "HS256"
       - key: ALLOWED_ORIGINS
-        value: "*"
+        value: "http://localhost:3000,http://localhost:5173"
