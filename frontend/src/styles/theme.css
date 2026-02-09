@@ -1,0 +1,144 @@
+/* AI视频制片链路系统 - 主题样式 */
+/* 风格: Apple Pro + Dark Mode + Glassmorphism */
+
+:root {
+  /* ==================== 背景层级 ==================== */
+  --bg-primary: #000000;
+  --bg-secondary: #0d0d12;
+  --bg-tertiary: #1a1a24;
+  --bg-elevated: #252530;
+  --bg-overlay: rgba(0, 0, 0, 0.8);
+
+  /* ==================== 玻璃拟态 ==================== */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-highlight: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+  /* ==================== 文字颜色 ==================== */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-tertiary: rgba(255, 255, 255, 0.5);
+  --text-quaternary: rgba(255, 255, 255, 0.3);
+
+  /* ==================== 强调色 ==================== */
+  --accent-blue: #0a84ff;
+  --accent-blue-light: #409cff;
+  --accent-purple: #bf5af2;
+  --accent-orange: #ff9f0a;
+  --accent-green: #30d158;
+  --accent-red: #ff453a;
+  --accent-yellow: #ffd60a;
+
+  /* ==================== 渐变色 ==================== */
+  --gradient-hero: linear-gradient(180deg, #1a1a2e 0%, #0d0d12 100%);
+  --gradient-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  --gradient-accent: linear-gradient(135deg, #0a84ff 0%, #bf5af2 100%);
+  --gradient-success: linear-gradient(135deg, #30d158 0%, #64d2ff 100%);
+  --gradient-warning: linear-gradient(135deg, #ff9f0a 0%, #ffd60a 100%);
+
+  /* ==================== 字体 ==================== */
+  --font-primary: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SF Mono", "Fira Code", "JetBrains Mono", Consolas, Monaco, monospace;
+  --font-chinese: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+
+  /* ==================== 字号 ==================== */
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 28px;
+  --text-3xl: 36px;
+  --text-4xl: 48px;
+
+  /* ==================== 字重 ==================== */
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* ==================== 间距 ==================== */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ==================== 布局尺寸 ==================== */
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 64px;
+  --header-height: 56px;
+  --content-max-width: 1400px;
+  --card-border-radius: 16px;
+  --button-border-radius: 8px;
+  --input-border-radius: 10px;
+
+  /* ==================== 动画时间 ==================== */
+  --duration-instant: 100ms;
+  --duration-fast: 200ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-slower: 700ms;
+
+  /* ==================== 缓动函数 ==================== */
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-dramatic: cubic-bezier(0.87, 0, 0.13, 1);
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* ==================== 全局样式 ==================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-primary);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  min-height: 100vh;
+}
+
+/* ==================== 滚动条样式 ==================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--glass-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--glass-highlight);
+}
+
+/* ==================== 选中文本样式 ==================== */
+
+::selection {
+  background: var(--accent-blue);
+  color: white;
+}
