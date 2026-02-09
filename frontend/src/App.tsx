@@ -252,7 +252,7 @@ function App() {
               </div>
             )}
 
-            {activeNav === 'script' && <ScriptCreation />}
+            {activeNav === 'script' && <ScriptCreation onBack={() => setActiveNav('home')} />}
 
             {activeNav !== 'home' && activeNav !== 'script' && (
               <div className="placeholder-page">

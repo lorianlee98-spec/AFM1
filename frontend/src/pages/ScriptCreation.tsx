@@ -19,7 +19,8 @@ import {
   Tag,
   MoreVertical,
   Check,
-  AlertCircle
+  AlertCircle,
+  ArrowLeft
 } from 'lucide-react'
 import axios from 'axios'
 import '../styles/theme.css'
@@ -57,7 +58,11 @@ const GENRES = [
   { value: 'animation', label: '动画', color: '#AF52DE' },
 ]
 
-export default function ScriptCreation() {
+interface ScriptCreationProps {
+  onBack?: () => void
+}
+
+export default function ScriptCreation({ onBack }: ScriptCreationProps) {
   const [projects, setProjects] = useState<ScriptProject[]>([])
   const [currentProject, setCurrentProject] = useState<ScriptProject | null>(null)
   const [scriptContent, setScriptContent] = useState('')
@@ -261,6 +266,18 @@ export default function ScriptCreation() {
             {/* 项目头部 */}
             <div className="editor-header">
               <div className="project-header-info">
+                {/* 返回按钮 */}
+                {onBack && (
+                  <motion.button
+                    className="btn-back"
+                    onClick={onBack}
+                    whileHover={{ x: -4 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <ArrowLeft size={18} />
+                    返回首页
+                  </motion.button>
+                )}
                 <h1 className="project-header-title">{currentProject.title}</h1>
                 <p className="project-header-desc">{currentProject.description}</p>
               </div>
@@ -842,6 +859,27 @@ export default function ScriptCreation() {
           to {
             transform: rotate(360deg);
           }
+        }
+
+        .btn-back {
+          display: flex;
+          align-items: center;
+          gap: var(--space-2);
+          padding: var(--space-2) var(--space-3);
+          margin-bottom: var(--space-3);
+          background: transparent;
+          border: 1px solid var(--glass-border);
+          border-radius: 8px;
+          color: var(--text-secondary);
+          font-size: var(--text-sm);
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .btn-back:hover {
+          background: var(--glass-bg);
+          border-color: var(--accent-blue);
+          color: var(--accent-blue);
         }
       `}</style>
     </div>
