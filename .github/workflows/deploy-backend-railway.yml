@@ -31,7 +31,6 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          railway login --token $RAILWAY_TOKEN
           railway up --service ai-video-backend
       
       - name: 部署成功通知
