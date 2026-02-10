@@ -12,6 +12,9 @@ sqlalchemy==2.0.23
 alembic==1.12.1
 psycopg2-binary==2.9.9
 
+# 缓存
+redis==5.0.1
+
 # 认证与安全
 python-jose[cryptography]==3.3.0
 bcrypt==4.1.2
