@@ -1,12 +1,19 @@
-# Render 部署配置 - 使用 Docker
+# Render 部署配置 - 后端服务
+# 访问 https://render.com 并连接 GitHub 仓库后，Render 会自动读取此配置
+
 services:
   - type: web
     name: ai-video-backend
     runtime: docker
     plan: free
+    region: singapore
+    branch: main
     dockerfilePath: ./Dockerfile
+    healthCheckPath: /health
     envVars:
       - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
         sync: false
       - key: SECRET_KEY
         generateValue: true
@@ -24,3 +31,8 @@ services:
         value: "HS256"
       - key: ALLOWED_ORIGINS
         value: "*"
+      - key: PORT
+        value: "8000"
+      - key: PYTHONPATH
+        value: "/app/backend"
+    autoDeploy: true

@@ -6,7 +6,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
-  Film, 
   Home, 
   FileText, 
   Image, 
@@ -113,11 +112,7 @@ function App() {
       {/* 侧边栏 */}
       <aside className="sidebar">
         <div className="sidebar-header">
-          <div className="logo">
-            <Film size={28} />
-            <Sparkles size={14} className="logo-sparkle" />
-          </div>
-          <span className="logo-text">AMF.io</span>
+          <span className="logo-text">AFM.Create</span>
         </div>
 
         <nav className="sidebar-nav">
@@ -252,7 +247,7 @@ function App() {
               </div>
             )}
 
-            {activeNav === 'script' && <ScriptCreation onBack={() => setActiveNav('home')} />}
+            {activeNav === 'script' && <ScriptCreation />}
 
             {activeNav !== 'home' && activeNav !== 'script' && (
               <div className="placeholder-page">
@@ -333,9 +328,15 @@ function App() {
         }
 
         .logo-text {
-          font-size: var(--text-lg);
+          font-size: var(--text-xl);
           font-weight: var(--font-bold);
           color: var(--text-primary);
+          font-family: var(--font-primary);
+          background: var(--gradient-accent);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          letter-spacing: -0.5px;
         }
 
         .sidebar-nav {

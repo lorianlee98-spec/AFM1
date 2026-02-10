@@ -1,7 +1,27 @@
 {
   "version": 2,
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/dist",
+  "name": "ai-video-platform-frontend",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "framework": "vite",
-  "installCommand": "cd frontend && npm install"
+  "installCommand": "npm install",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": {
+    "VITE_API_BASE_URL": "@api_base_url"
+  },
+  "github": {
+    "enabled": true,
+    "autoJobCancelation": true
+  },
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "staging": true
+    }
+  }
 }

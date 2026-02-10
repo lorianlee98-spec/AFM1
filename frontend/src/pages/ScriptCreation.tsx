@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
+import {
   FileText, 
   Sparkles, 
   Save, 
@@ -22,7 +22,7 @@ import {
   MoreVertical,
   Edit2
 } from 'lucide-react'
-import { scriptApi, Script, ScriptCreate, ScriptUpdate } from '../services/scriptApi'
+import { scriptApi, Script, ScriptCreate } from '../services/scriptApi'
 import '../styles/theme.css'
 import '../styles/components.css'
 
@@ -65,6 +65,15 @@ export default function ScriptCreation() {
 
   // AI生成提示词
   const [aiPrompt, setAiPrompt] = useState('')
+  // Prompt优化建议
+  const [promptSuggestions, setPromptSuggestions] = useState<string[]>([])
+  // 内容优化建议
+  const [contentSuggestions, setContentSuggestions] = useState<{
+    type: 'structure' | 'dialogue' | 'description' | 'character'
+    title: string
+    description: string
+    suggestion: string
+  }[]>([])
 
   // 点击外部关闭菜单
   useEffect(() => {
@@ -215,16 +224,71 @@ export default function ScriptCreation() {
     return () => clearTimeout(timeoutId)
   }, [scriptContent, currentScript])
 
+  // 优化提示词
+  const optimizePrompt = async () => {
+    if (!aiPrompt.trim()) return
+    
+    try {
+      setIsLoading(true)
+      const suggestions = await scriptApi.optimizePrompt(aiPrompt)
+      setPromptSuggestions(suggestions)
+    } catch (error) {
+      console.error('优化提示词失败:', error)
+      setError('优化提示词失败，请重试')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 应用提示词建议
+  const applyPromptSuggestion = (suggestion: string) => {
+    setAiPrompt(suggestion)
+    setPromptSuggestions([])
+  }
+
+  // 优化剧本内容
+  const optimizeScriptContent = async () => {
+    if (!scriptContent.trim()) return
+    
+    try {
+      setIsLoading(true)
+      const suggestions = await scriptApi.optimizeContent(scriptContent, currentScript?.id)
+      setContentSuggestions(suggestions)
+    } catch (error) {
+      console.error('优化内容失败:', error)
+      setError('优化内容失败，请重试')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // 应用内容优化建议
+  const applyContentSuggestion = (suggestion: string) => {
+    setScriptContent(suggestion)
+    setContentSuggestions([])
+  }
+
   const handleGenerateScript = async () => {
     if (!currentScript || !aiPrompt.trim()) return
 
     setIsGenerating(true)
     
-    setTimeout(() => {
+    try {
+      // 模拟AI生成过程
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      
       const generatedScript = generateMockScript(currentScript, aiPrompt)
       setScriptContent(generatedScript)
+      
+      // 生成后自动分析并提供优化建议
+      const suggestions = await scriptApi.optimizeContent(generatedScript, currentScript.id)
+      setContentSuggestions(suggestions)
+    } catch (error) {
+      console.error('生成剧本失败:', error)
+      setError('生成剧本失败，请重试')
+    } finally {
       setIsGenerating(false)
-    }, 3000)
+    }
   }
 
   const handleExportScript = () => {
@@ -306,42 +370,49 @@ export default function ScriptCreation() {
                 
                 {/* 管理菜单按钮 */}
                 <div className="menu-container" ref={menuOpenId === script.id ? menuRef : null}>
-                  <button
+                  <motion.button
                     className="btn-icon btn-ghost menu-btn"
                     onClick={(e) => {
                       e.stopPropagation()
                       setMenuOpenId(menuOpenId === script.id ? null : script.id)
                     }}
+                    whileHover={{ scale: 1.1, backgroundColor: 'rgba(255, 255, 255, 0.05)' }}
+                    whileTap={{ scale: 0.95 }}
                   >
                     <MoreVertical size={16} />
-                  </button>
+                  </motion.button>
                   
                   {/* 下拉菜单 */}
                   <AnimatePresence>
                     {menuOpenId === script.id && (
                       <motion.div
                         className="dropdown-menu"
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
+                        initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                       >
-                        <button
+                        <motion.button
                           className="menu-item"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleRenameScript(script)
                           }}
+                          whileHover={{ backgroundColor: 'rgba(10, 132, 255, 0.1)', x: 4 }}
+                          whileTap={{ scale: 0.98 }}
                         >
                           <Edit2 size={14} />
                           重命名
-                        </button>
-                        <button
+                        </motion.button>
+                        <motion.button
                           className="menu-item delete"
                           onClick={(e) => handleDeleteScript(script.id, e)}
+                          whileHover={{ backgroundColor: 'rgba(255, 59, 48, 0.1)', x: 4 }}
+                          whileTap={{ scale: 0.98 }}
                         >
                           <Trash2 size={14} />
                           删除
-                        </button>
+                        </motion.button>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -397,14 +468,48 @@ export default function ScriptCreation() {
                     </span>
                   )}
                 </div>
-                <button 
+                <motion.button 
+                  className="btn-secondary"
+                  onClick={async () => {
+                    if (!currentScript) return
+                    try {
+                      setSaveStatus('saving')
+                      await scriptApi.updateScriptContent(currentScript.id, scriptContent)
+                      setSaveStatus('saved')
+                      setLastSaved(new Date())
+                    } catch (error) {
+                      console.error('保存失败:', error)
+                      setError('保存失败，请重试')
+                      setSaveStatus('unsaved')
+                    }
+                  }}
+                  disabled={!currentScript || !scriptContent}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Save size={16} />
+                  保存
+                </motion.button>
+                <motion.button 
+                  className="btn-secondary"
+                  onClick={optimizeScriptContent}
+                  disabled={!scriptContent}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Wand2 size={16} />
+                  优化内容
+                </motion.button>
+                <motion.button 
                   className="btn-secondary"
                   onClick={handleExportScript}
                   disabled={!scriptContent}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <Download size={16} />
                   导出
-                </button>
+                </motion.button>
               </div>
             </div>
 
@@ -438,6 +543,16 @@ export default function ScriptCreation() {
                   className="ai-input"
                 />
                 <motion.button
+                  className="btn-secondary ai-optimize-btn"
+                  onClick={optimizePrompt}
+                  disabled={!aiPrompt.trim()}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Edit3 size={16} />
+                  优化提示词
+                </motion.button>
+                <motion.button
                   className="btn-primary ai-generate-btn"
                   onClick={handleGenerateScript}
                   disabled={isGenerating || !aiPrompt.trim()}
@@ -454,6 +569,37 @@ export default function ScriptCreation() {
                   )}
                 </motion.button>
               </div>
+              
+              {/* Prompt优化建议 */}
+              <AnimatePresence>
+                {promptSuggestions.length > 0 && (
+                  <motion.div
+                    className="prompt-suggestions"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                  >
+                    <h4 className="suggestions-title">
+                      <Sparkles size={16} />
+                      提示词优化建议
+                    </h4>
+                    <div className="suggestions-list">
+                      {promptSuggestions.map((suggestion, index) => (
+                        <motion.button
+                          key={index}
+                          className="suggestion-item"
+                          onClick={() => applyPromptSuggestion(suggestion)}
+                          whileHover={{ x: 4 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Plus size={14} className="suggestion-icon" />
+                          {suggestion}
+                        </motion.button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* 编辑器内容 */}
@@ -478,6 +624,64 @@ export default function ScriptCreation() {
                 </div>
               )}
             </div>
+            
+            {/* 内容优化建议 */}
+            <AnimatePresence>
+              {contentSuggestions.length > 0 && (
+                <motion.div
+                  className="content-suggestions"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                >
+                  <h4 className="suggestions-title">
+                    <Wand2 size={16} />
+                    内容优化建议
+                  </h4>
+                  <div className="suggestions-grid">
+                    {contentSuggestions.map((suggestion, index) => (
+                      <motion.div
+                        key={index}
+                        className={`suggestion-card suggestion-${suggestion.type}`}
+                        whileHover={{ y: -4 }}
+                        transition={{ type: 'spring', stiffness: 300 }}
+                      >
+                        <div className="suggestion-header">
+                          <h5 className="suggestion-title">{suggestion.title}</h5>
+                          <span 
+                            className="suggestion-type"
+                            style={{
+                              backgroundColor: suggestion.type === 'structure' ? 'rgba(10, 132, 255, 0.2)' :
+                                             suggestion.type === 'dialogue' ? 'rgba(48, 209, 88, 0.2)' :
+                                             suggestion.type === 'description' ? 'rgba(191, 90, 242, 0.2)' :
+                                             'rgba(255, 159, 10, 0.2)',
+                              color: suggestion.type === 'structure' ? '#0a84ff' :
+                                     suggestion.type === 'dialogue' ? '#30d158' :
+                                     suggestion.type === 'description' ? '#bf5af2' :
+                                     '#ff9f0a'
+                            }}
+                          >
+                            {suggestion.type === 'structure' ? '结构' :
+                             suggestion.type === 'dialogue' ? '对话' :
+                             suggestion.type === 'description' ? '描述' :
+                             '角色'}
+                          </span>
+                        </div>
+                        <p className="suggestion-description">{suggestion.description}</p>
+                        <motion.button
+                          className="btn-small btn-primary"
+                          onClick={() => applyContentSuggestion(suggestion.suggestion)}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          应用建议
+                        </motion.button>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </>
         ) : (
           <div className="empty-editor">
@@ -671,15 +875,17 @@ export default function ScriptCreation() {
         .script-creation-page {
           display: flex;
           height: 100vh;
-          background: var(--bg-primary);
+          background: var(--bg-secondary);
+          overflow: hidden;
         }
 
         .projects-sidebar {
-          width: 280px;
+          width: 300px;
           background: var(--bg-secondary);
           border-right: 1px solid var(--glass-border);
           display: flex;
           flex-direction: column;
+          box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
         }
 
         .sidebar-header {
@@ -709,20 +915,23 @@ export default function ScriptCreation() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: var(--space-3);
-          margin-bottom: var(--space-2);
-          background: var(--glass-bg);
+          padding: var(--space-4);
+          margin-bottom: var(--space-3);
+          background: rgba(255, 255, 255, 0.03);
           border: 1px solid var(--glass-border);
           border-radius: var(--card-border-radius);
           cursor: pointer;
           transition: all 0.2s ease;
           position: relative;
+          backdrop-filter: blur(8px);
         }
 
         .project-card:hover,
         .project-card.active {
           background: rgba(10, 132, 255, 0.1);
           border-color: rgba(10, 132, 255, 0.3);
+          transform: translateX(6px);
+          box-shadow: 0 4px 16px rgba(10, 132, 255, 0.1);
         }
 
         .project-info {
@@ -776,11 +985,12 @@ export default function ScriptCreation() {
           margin-top: 4px;
           background: var(--bg-secondary);
           border: 1px solid var(--glass-border);
-          border-radius: 8px;
+          border-radius: var(--button-border-radius);
           padding: var(--space-1);
-          min-width: 120px;
+          min-width: 140px;
           z-index: 100;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          box-shadow: var(--glass-shadow);
+          backdrop-filter: blur(10px);
         }
 
         .menu-item {
@@ -788,19 +998,38 @@ export default function ScriptCreation() {
           align-items: center;
           gap: var(--space-2);
           width: 100%;
-          padding: var(--space-2) var(--space-3);
+          padding: var(--space-3) var(--space-4);
           background: transparent;
           border: none;
-          border-radius: 4px;
+          border-radius: var(--button-border-radius);
           color: var(--text-secondary);
           font-size: var(--text-sm);
+          font-weight: var(--font-medium);
           cursor: pointer;
           transition: all 0.2s ease;
+          position: relative;
+          overflow: hidden;
         }
 
         .menu-item:hover {
-          background: var(--glass-bg);
+          background: rgba(255, 255, 255, 0.05);
           color: var(--text-primary);
+          transform: translateX(4px);
+        }
+
+        .menu-item::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 3px;
+          background: transparent;
+          transition: all 0.2s ease;
+        }
+
+        .menu-item:hover::before {
+          background: var(--accent-blue);
         }
 
         .menu-item.delete {
@@ -811,19 +1040,36 @@ export default function ScriptCreation() {
           background: rgba(255, 59, 48, 0.1);
         }
 
+        .menu-item.delete:hover::before {
+          background: var(--accent-red);
+        }
+
+        .menu-btn {
+          opacity: 0;
+          transition: opacity 0.2s ease, transform 0.2s ease;
+          border-radius: var(--button-border-radius);
+        }
+
+        .project-card:hover .menu-btn {
+          opacity: 1;
+          transform: scale(1.05);
+        }
+
         .editor-main {
           flex: 1;
           display: flex;
           flex-direction: column;
           overflow: hidden;
+          background: var(--bg-secondary);
         }
 
         .editor-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: var(--space-4);
+          padding: var(--space-3) var(--space-4);
           border-bottom: 1px solid var(--glass-border);
+          background: var(--bg-secondary);
         }
 
         .project-header-title {
@@ -845,33 +1091,45 @@ export default function ScriptCreation() {
 
         .editor-tabs {
           display: flex;
-          gap: var(--space-2);
-          padding: var(--space-2) var(--space-4);
+          gap: var(--space-3);
+          padding: var(--space-3) var(--space-4);
           border-bottom: 1px solid var(--glass-border);
+          background: var(--bg-secondary);
         }
 
         .tab {
           display: flex;
           align-items: center;
-          gap: var(--space-1);
-          padding: var(--space-2) var(--space-4);
-          background: transparent;
-          border: none;
-          border-radius: 8px;
+          gap: var(--space-2);
+          padding: var(--space-3) var(--space-5);
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid var(--glass-border);
+          border-radius: var(--button-border-radius);
           color: var(--text-secondary);
           font-size: var(--text-sm);
+          font-weight: var(--font-medium);
           cursor: pointer;
           transition: all 0.2s ease;
+          backdrop-filter: blur(8px);
+        }
+
+        .tab:hover {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.1);
+          color: var(--text-primary);
         }
 
         .tab.active {
-          background: rgba(10, 132, 255, 0.1);
+          background: rgba(10, 132, 255, 0.15);
+          border-color: rgba(10, 132, 255, 0.4);
           color: var(--accent-blue);
+          box-shadow: 0 2px 8px rgba(10, 132, 255, 0.2);
         }
 
         .ai-generation-section {
-          padding: var(--space-4);
+          padding: var(--space-3) var(--space-4);
           border-bottom: 1px solid var(--glass-border);
+          background: var(--bg-secondary);
         }
 
         .ai-input-wrapper {
@@ -882,6 +1140,18 @@ export default function ScriptCreation() {
           background: var(--glass-bg);
           border: 1px solid var(--glass-border);
           border-radius: 12px;
+        }
+
+        .ai-optimize-btn {
+          padding: var(--space-2) var(--space-3);
+          border-radius: var(--button-border-radius);
+          font-size: var(--text-sm);
+        }
+
+        .ai-generate-btn {
+          padding: var(--space-2) var(--space-4);
+          border-radius: var(--button-border-radius);
+          font-size: var(--text-sm);
         }
 
         .ai-icon {
@@ -1075,21 +1345,24 @@ export default function ScriptCreation() {
           display: flex;
           align-items: center;
           gap: var(--space-2);
-          padding: var(--space-2) var(--space-3);
+          padding: var(--space-2) var(--space-4);
           margin-bottom: var(--space-3);
-          background: transparent;
+          background: rgba(255, 255, 255, 0.03);
           border: 1px solid var(--glass-border);
-          border-radius: 8px;
+          border-radius: var(--button-border-radius);
           color: var(--text-secondary);
           font-size: var(--text-sm);
+          font-weight: var(--font-medium);
           cursor: pointer;
           transition: all 0.2s ease;
+          backdrop-filter: blur(8px);
         }
 
         .btn-back:hover {
-          background: var(--glass-bg);
-          border-color: var(--accent-blue);
+          background: rgba(10, 132, 255, 0.1);
+          border-color: rgba(10, 132, 255, 0.3);
           color: var(--accent-blue);
+          transform: translateX(-2px);
         }
 
         .error-toast {
@@ -1114,6 +1387,116 @@ export default function ScriptCreation() {
           cursor: pointer;
         }
 
+        /* Prompt优化建议样式 */
+        .prompt-suggestions {
+          margin-top: var(--space-4);
+          padding: var(--space-3);
+          background: var(--glass-bg);
+          border: 1px solid var(--glass-border);
+          border-radius: var(--card-border-radius);
+        }
+
+        .suggestions-title {
+          display: flex;
+          align-items: center;
+          gap: var(--space-2);
+          font-size: var(--text-sm);
+          font-weight: var(--font-semibold);
+          color: var(--text-primary);
+          margin-bottom: var(--space-3);
+        }
+
+        .suggestions-list {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-2);
+        }
+
+        .suggestion-item {
+          display: flex;
+          align-items: flex-start;
+          gap: var(--space-2);
+          padding: var(--space-3);
+          background: transparent;
+          border: 1px solid var(--glass-border);
+          border-radius: var(--button-border-radius);
+          color: var(--text-secondary);
+          font-size: var(--text-sm);
+          text-align: left;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .suggestion-item:hover {
+          background: rgba(10, 132, 255, 0.1);
+          border-color: rgba(10, 132, 255, 0.3);
+          color: var(--text-primary);
+        }
+
+        .suggestion-icon {
+          margin-top: 2px;
+          flex-shrink: 0;
+        }
+
+        /* 内容优化建议样式 */
+        .content-suggestions {
+          padding: var(--space-4);
+          border-top: 1px solid var(--glass-border);
+          background: var(--bg-secondary);
+        }
+
+        .suggestions-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: var(--space-4);
+          margin-top: var(--space-3);
+        }
+
+        .suggestion-card {
+          padding: var(--space-4);
+          background: var(--glass-bg);
+          border: 1px solid var(--glass-border);
+          border-radius: var(--card-border-radius);
+          transition: all 0.2s ease;
+        }
+
+        .suggestion-card:hover {
+          box-shadow: var(--glass-shadow);
+        }
+
+        .suggestion-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: var(--space-2);
+        }
+
+        .suggestion-title {
+          font-size: var(--text-sm);
+          font-weight: var(--font-semibold);
+          color: var(--text-primary);
+          margin: 0;
+        }
+
+        .suggestion-type {
+          padding: 2px 8px;
+          border-radius: 4px;
+          font-size: var(--text-xs);
+          font-weight: var(--font-medium);
+        }
+
+        .suggestion-description {
+          font-size: var(--text-xs);
+          color: var(--text-secondary);
+          margin-bottom: var(--space-3);
+          line-height: 1.4;
+        }
+
+        .btn-small {
+          padding: var(--space-1) var(--space-3);
+          font-size: var(--text-xs);
+        }
+
         @keyframes spin {
           to {
             transform: rotate(360deg);
@@ -1123,6 +1506,8 @@ export default function ScriptCreation() {
     </div>
   )
 }
+
+
 
 // 模拟AI生成剧本
 function generateMockScript(script: Script, prompt: string): string {
@@ -1137,16 +1522,16 @@ function generateMockScript(script: Script, prompt: string): string {
 [画面描述]
 镜头缓缓推进，展现主要场景。环境氛围引人入胜。
 
-主角A：（独白）
+主角：（独白）
 ${prompt}...
 
 [画面描述]
-镜头切换，展示配角B进入场景。
+镜头切换，展示配角进入场景。
 
-配角B：（对话）
+配角：（对话）
 你来了。我一直在等你。
 
-主角A：（对话）
+主角：（对话）
 我知道。有些事情我们必须面对。
 
 === 场景2：发展 ===
@@ -1154,10 +1539,10 @@ ${prompt}...
 [画面描述]
 情节逐渐展开，冲突开始显现。
 
-配角B：（对话）
+配角：（对话）
 但是这样做真的值得吗？
 
-主角A：（对话）
+主角：（对话）
 有些事情不是为了值得，而是因为必须做。
 
 [画面描述]
@@ -1168,7 +1553,7 @@ ${prompt}...
 [画面描述]
 剧情达到顶点，所有矛盾集中爆发。
 
-主角A：（独白）
+主角：（独白）
 这一刻，我终于明白了一切...
 
 [画面描述]
@@ -1179,10 +1564,10 @@ ${prompt}...
 [画面描述]
 故事走向尾声，留下余韵。
 
-主角A：（对话）
+主角：（对话）
 这就是我们的故事。
 
-配角B：（对话）
+配角：（对话）
 是的，而这只是开始。
 
 [画面描述]

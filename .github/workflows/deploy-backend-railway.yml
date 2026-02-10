@@ -1,0 +1,41 @@
+name: Deploy Backend - Railway
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'Dockerfile'
+      - 'railway.toml'
+      - 'requirements.txt'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: 部署后端到 Railway
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      
+      - name: 设置 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: 安装 Railway CLI
+        run: npm install -g @railway/cli
+      
+      - name: 部署到 Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway login --token $RAILWAY_TOKEN
+          railway up --service ai-video-backend
+      
+      - name: 部署成功通知
+        if: success()
+        run: |
+          echo "✅ 后端部署成功！"
+          echo "Railway Dashboard: https://railway.app/dashboard"

@@ -1,4 +1,5 @@
-from typing import Any, List
+import re
+from typing import Any, List, Dict, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.api import deps
@@ -164,3 +165,103 @@ def update_script_content(
     
     script = crud_script.update_content(db, db_obj=script, content=content)
     return script
+
+
+@router.post("/optimize/prompt")
+def optimize_prompt(
+    *, 
+    prompt: str,
+    current_user: User = Depends(deps.get_current_user)
+) -> Dict[str, List[str]]:
+    """
+    优化剧本生成提示词
+    """
+    if not prompt or len(prompt.strip()) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Prompt cannot be empty"
+        )
+    
+    # 生成优化建议
+    suggestions = [
+        f"{prompt}，包含详细的角色设定和情感冲突",
+        f"{prompt}，突出视觉效果和画面感",
+        f"{prompt}，加入意想不到的剧情转折",
+        f"{prompt}，注重对话的自然流畅和个性化",
+        f"{prompt}，营造特定的氛围和情绪基调"
+    ]
+    
+    return {"suggestions": suggestions}
+
+
+@router.post("/optimize/content")
+def optimize_content(
+    *, 
+    content: str,
+    script_id: Optional[int] = None,
+    db: Session = Depends(deps.get_db),
+    current_user: User = Depends(deps.get_current_user)
+) -> Dict[str, List[Dict[str, Any]]]:
+    """
+    优化剧本内容
+    """
+    if not content or len(content.strip()) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Content cannot be empty"
+        )
+    
+    # 获取剧本信息（如果提供了script_id）
+    script = None
+    if script_id:
+        script = crud_script.get(db, id=script_id)
+        if not script:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Script not found"
+            )
+        if script.user_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not enough permissions"
+            )
+    
+    suggestions = []
+    
+    # 结构优化建议
+    if "=== 场景" not in content:
+        suggestions.append({
+            "type": "structure",
+            "title": "剧本结构优化",
+            "description": "建议按照标准剧本结构组织内容",
+            "suggestion": f"{script.title if script else '剧本'}\n\n类型：{script.genre if script else '剧情'}\n目标时长：{script.duration if script else 5}分钟\n\n=== 场景1：开头 ===\n\n[画面描述]\n{content}\n\n=== 场景2：发展 ===\n\n[画面描述]\n...\n\n=== 场景3：高潮 ===\n\n[画面描述]\n...\n\n=== 场景4：结局 ===\n\n[画面描述]\n...\n\n=== 完 ==="
+        })
+    
+    # 对话优化建议
+    if "：（" not in content:
+        suggestions.append({
+            "type": "dialogue",
+            "title": "对话格式优化",
+            "description": "建议使用标准对话格式",
+            "suggestion": re.sub(r"([^：]+)：([^\n]+)", r"$1：（$2）", content)
+        })
+    
+    # 描述优化建议
+    if "[画面描述]" not in content:
+        suggestions.append({
+            "type": "description",
+            "title": "画面描述增强",
+            "description": "建议添加详细的画面描述",
+            "suggestion": re.sub(r"=== 场景[^=]+===", r"$&\n\n[画面描述]\n镜头推进，展示场景细节...", content)
+        })
+    
+    # 角色优化建议
+    if "主角" not in content or "配角" not in content:
+        suggestions.append({
+            "type": "character",
+            "title": "角色设定完善",
+            "description": "建议明确角色设定和关系",
+            "suggestion": content.replace("角色A", "主角").replace("角色B", "配角").replace("=== 场景1：开头 ===", "=== 场景1：开头 ===\n\n[角色设定]\n主角：主要人物，性格特点...\n配角：重要配角，与主角的关系...")
+        })
+    
+    return {"suggestions": suggestions}

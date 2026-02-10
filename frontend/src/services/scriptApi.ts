@@ -2,6 +2,8 @@ import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'
 
+const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === 'true'
+
 export interface Script {
   id: number
   title: string
@@ -43,28 +45,6 @@ const getAuthHeaders = () => {
   }
 }
 
-// 检查token是否有效
-const isTokenValid = () => {
-  const token = localStorage.getItem('auth_token')
-  if (!token) return false
-  
-  try {
-    // 简单检查token格式
-    const parts = token.split('.')
-    if (parts.length !== 3) return false
-    
-    // 解码payload检查是否过期
-    const payload = JSON.parse(atob(parts[1]))
-    if (payload.exp && payload.exp * 1000 < Date.now()) {
-      return false
-    }
-    return true
-  } catch {
-    return false
-  }
-}
-
-// 本地存储操作
 const localStorageScripts = {
   getScripts: (): Script[] => {
     const saved = localStorage.getItem('script_projects')
@@ -84,200 +64,262 @@ const localStorageScripts = {
   }
 }
 
-export const scriptApi = {
-  // 获取所有剧本
-  getScripts: async (): Promise<Script[]> => {
-    // 如果token无效，直接使用本地存储
-    if (!isTokenValid()) {
-      return localStorageScripts.getScripts()
-    }
-    
-    try {
-      const response = await axios.get(`${API_BASE_URL}/scripts/`, {
-        headers: getAuthHeaders(),
-      })
-      // 同步到本地存储
-      localStorageScripts.saveScripts(response.data)
-      return response.data
-    } catch (err: any) {
-      // 401错误时静默使用本地存储
-      if (err.response?.status === 401) {
-        return localStorageScripts.getScripts()
-      }
-      throw err
-    }
+const mockApi = {
+  getScripts: (): Script[] => {
+    return localStorageScripts.getScripts()
   },
 
-  // 获取单个剧本
-  getScript: async (id: number): Promise<Script> => {
-    if (!isTokenValid()) {
-      const scripts = localStorageScripts.getScripts()
-      const script = scripts.find(s => s.id === id)
-      if (script) {
-        script.content = localStorageScripts.getScriptContent(id)
-        return script
-      }
-      throw new Error('Script not found')
+  getScript: (id: number): Script => {
+    const scripts = localStorageScripts.getScripts()
+    const script = scripts.find(s => s.id === id)
+    if (script) {
+      script.content = localStorageScripts.getScriptContent(id)
+      return script
+    }
+    throw new Error('Script not found')
+  },
+
+  createScript: (data: ScriptCreate): Script => {
+    const scripts = localStorageScripts.getScripts()
+    const newScript: Script = {
+      id: Date.now(),
+      title: data.title,
+      description: data.description || null,
+      content: data.content || null,
+      genre: data.genre || null,
+      target_audience: data.target_audience || null,
+      duration: data.duration || 5,
+      status: data.status || 'draft',
+      user_id: 0,
+      created_at: new Date().toISOString(),
+      updated_at: null,
+    }
+    scripts.unshift(newScript)
+    localStorageScripts.saveScripts(scripts)
+    return newScript
+  },
+
+  updateScript: (id: number, data: ScriptUpdate): Script => {
+    const scripts = localStorageScripts.getScripts()
+    const index = scripts.findIndex(s => s.id === id)
+    if (index === -1) throw new Error('Script not found')
+    
+    const updated = { ...scripts[index], ...data, updated_at: new Date().toISOString() }
+    scripts[index] = updated
+    localStorageScripts.saveScripts(scripts)
+    return updated
+  },
+
+  deleteScript: (id: number): void => {
+    const scripts = localStorageScripts.getScripts()
+    const filtered = scripts.filter(s => s.id !== id)
+    localStorageScripts.saveScripts(filtered)
+    localStorage.removeItem(`script_content_${id}`)
+  },
+
+  updateScriptContent: (id: number, content: string): void => {
+    localStorageScripts.saveScriptContent(id, content)
+  },
+
+  optimizePrompt: (prompt: string): string[] => {
+    return [
+      `${prompt}，包含详细的角色设定和情感冲突`,
+      `${prompt}，突出视觉效果和画面感`,
+      `${prompt}，加入意想不到的剧情转折`,
+      `${prompt}，注重对话的自然流畅和个性化`,
+      `${prompt}，营造特定的氛围和情绪基调`
+    ]
+  },
+
+  optimizeContent: (content: string): {
+    type: 'structure' | 'dialogue' | 'description' | 'character'
+    title: string
+    description: string
+    suggestion: string
+  }[] => {
+    const suggestions = []
+    
+    if (!content.includes('=== 场景')) {
+      suggestions.push({
+        type: 'structure' as const,
+        title: '剧本结构优化',
+        description: '建议按照标准剧本结构组织内容',
+        suggestion: `剧本\n\n类型：剧情\n目标时长：5分钟\n\n=== 场景1：开头 ===\n\n[画面描述]\n${content}\n\n=== 场景2：发展 ===\n\n[画面描述]\n...\n\n=== 场景3：高潮 ===\n\n[画面描述]\n...\n\n=== 场景4：结局 ===\n\n[画面描述]\n...\n\n=== 完 ===`
+      })
     }
     
+    if (!content.includes('：（')) {
+      suggestions.push({
+        type: 'dialogue' as const,
+        title: '对话格式优化',
+        description: '建议使用标准对话格式',
+        suggestion: content.replace(/([^：]+)：([^\n]+)/g, '$1：（$2）')
+      })
+    }
+    
+    if (!content.includes('[画面描述]')) {
+      suggestions.push({
+        type: 'description' as const,
+        title: '画面描述增强',
+        description: '建议添加详细的画面描述',
+        suggestion: content.replace(/=== 场景[^=]+===/g, '$&\n\n[画面描述]\n镜头推进，展示场景细节...')
+      })
+    }
+    
+    if (!content.includes('主角') || !content.includes('配角')) {
+      suggestions.push({
+        type: 'character' as const,
+        title: '角色设定完善',
+        description: '建议明确角色设定和关系',
+        suggestion: content.replace(/角色A/g, '主角')
+          .replace(/角色B/g, '配角')
+          .replace(/=== 场景1：开头 ===/, '=== 场景1：开头 ===\n\n[角色设定]\n主角：主要人物，性格特点...\n配角：重要配角，与主角的关系...')
+      })
+    }
+    
+    return suggestions
+  }
+}
+
+const realApi = {
+  getScripts: async (): Promise<Script[]> => {
+    const response = await axios.get(`${API_BASE_URL}/scripts/`, {
+      headers: getAuthHeaders(),
+    })
+    return response.data
+  },
+
+  getScript: async (id: number): Promise<Script> => {
     const response = await axios.get(`${API_BASE_URL}/scripts/${id}`, {
       headers: getAuthHeaders(),
     })
     return response.data
   },
 
-  // 创建剧本
   createScript: async (data: ScriptCreate): Promise<Script> => {
-    if (!isTokenValid()) {
-      const scripts = localStorageScripts.getScripts()
-      const newScript: Script = {
-        id: Date.now(),
-        title: data.title,
-        description: data.description || null,
-        content: data.content || null,
-        genre: data.genre || null,
-        target_audience: data.target_audience || null,
-        duration: data.duration || 5,
-        status: data.status || 'draft',
-        user_id: 0,
-        created_at: new Date().toISOString(),
-        updated_at: null,
-      }
-      scripts.unshift(newScript)
-      localStorageScripts.saveScripts(scripts)
-      return newScript
-    }
-    
-    try {
-      const response = await axios.post(`${API_BASE_URL}/scripts/`, data, {
-        headers: getAuthHeaders(),
-      })
-      // 同步到本地存储
-      const scripts = localStorageScripts.getScripts()
-      scripts.unshift(response.data)
-      localStorageScripts.saveScripts(scripts)
-      return response.data
-    } catch (err: any) {
-      if (err.response?.status === 401) {
-        // 降级到本地存储
-        const scripts = localStorageScripts.getScripts()
-        const newScript: Script = {
-          id: Date.now(),
-          title: data.title,
-          description: data.description || null,
-          content: data.content || null,
-          genre: data.genre || null,
-          target_audience: data.target_audience || null,
-          duration: data.duration || 5,
-          status: data.status || 'draft',
-          user_id: 0,
-          created_at: new Date().toISOString(),
-          updated_at: null,
-        }
-        scripts.unshift(newScript)
-        localStorageScripts.saveScripts(scripts)
-        return newScript
-      }
-      throw err
-    }
+    const response = await axios.post(`${API_BASE_URL}/scripts/`, data, {
+      headers: getAuthHeaders(),
+    })
+    return response.data
   },
 
-  // 更新剧本
   updateScript: async (id: number, data: ScriptUpdate): Promise<Script> => {
-    if (!isTokenValid()) {
-      const scripts = localStorageScripts.getScripts()
-      const index = scripts.findIndex(s => s.id === id)
-      if (index === -1) throw new Error('Script not found')
-      
-      const updated = { ...scripts[index], ...data, updated_at: new Date().toISOString() }
-      scripts[index] = updated
-      localStorageScripts.saveScripts(scripts)
-      return updated
-    }
-    
-    try {
-      const response = await axios.put(`${API_BASE_URL}/scripts/${id}`, data, {
-        headers: getAuthHeaders(),
-      })
-      // 同步到本地存储
-      const scripts = localStorageScripts.getScripts()
-      const index = scripts.findIndex(s => s.id === id)
-      if (index !== -1) {
-        scripts[index] = response.data
-        localStorageScripts.saveScripts(scripts)
-      }
-      return response.data
-    } catch (err: any) {
-      if (err.response?.status === 401) {
-        const scripts = localStorageScripts.getScripts()
-        const index = scripts.findIndex(s => s.id === id)
-        if (index === -1) throw new Error('Script not found')
-        
-        const updated = { ...scripts[index], ...data, updated_at: new Date().toISOString() }
-        scripts[index] = updated
-        localStorageScripts.saveScripts(scripts)
-        return updated
-      }
-      throw err
-    }
+    const response = await axios.put(`${API_BASE_URL}/scripts/${id}`, data, {
+      headers: getAuthHeaders(),
+    })
+    return response.data
   },
 
-  // 删除剧本
   deleteScript: async (id: number): Promise<void> => {
-    if (!isTokenValid()) {
-      const scripts = localStorageScripts.getScripts()
-      const filtered = scripts.filter(s => s.id !== id)
-      localStorageScripts.saveScripts(filtered)
-      localStorage.removeItem(`script_content_${id}`)
-      return
-    }
-    
-    try {
-      await axios.delete(`${API_BASE_URL}/scripts/${id}`, {
-        headers: getAuthHeaders(),
-      })
-      // 同步到本地存储
-      const scripts = localStorageScripts.getScripts()
-      const filtered = scripts.filter(s => s.id !== id)
-      localStorageScripts.saveScripts(filtered)
-      localStorage.removeItem(`script_content_${id}`)
-    } catch (err: any) {
-      if (err.response?.status === 401) {
-        const scripts = localStorageScripts.getScripts()
-        const filtered = scripts.filter(s => s.id !== id)
-        localStorageScripts.saveScripts(filtered)
-        localStorage.removeItem(`script_content_${id}`)
-        return
-      }
-      throw err
-    }
+    await axios.delete(`${API_BASE_URL}/scripts/${id}`, {
+      headers: getAuthHeaders(),
+    })
   },
 
-  // 更新剧本内容
   updateScriptContent: async (id: number, content: string): Promise<void> => {
-    // 总是保存到本地存储
-    localStorageScripts.saveScriptContent(id, content)
-    
-    if (!isTokenValid()) {
-      return
-    }
-    
-    try {
-      await axios.patch(
-        `${API_BASE_URL}/scripts/${id}/content`,
-        { content },
-        {
-          headers: {
-            ...getAuthHeaders(),
-            'Content-Type': 'application/json',
-          },
-        }
-      )
-    } catch (err: any) {
-      // 401错误时静默处理，因为已经保存到本地
-      if (err.response?.status !== 401) {
-        throw err
+    await axios.patch(
+      `${API_BASE_URL}/scripts/${id}/content`,
+      { content },
+      {
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
       }
+    )
+  },
+
+  optimizePrompt: async (prompt: string): Promise<string[]> => {
+    const response = await axios.post(`${API_BASE_URL}/scripts/optimize/prompt`, 
+      { prompt },
+      {
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+    return response.data.suggestions
+  },
+
+  optimizeContent: async (content: string, scriptId?: number): Promise<{
+    type: 'structure' | 'dialogue' | 'description' | 'character'
+    title: string
+    description: string
+    suggestion: string
+  }[]> => {
+    const response = await axios.post(`${API_BASE_URL}/scripts/optimize/content`, 
+      { content, script_id: scriptId },
+      {
+        headers: {
+          ...getAuthHeaders(),
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+    return response.data.suggestions
+  }
+}
+
+export const scriptApi = {
+  getScripts: async (): Promise<Script[]> => {
+    if (USE_MOCK_API) {
+      return mockApi.getScripts()
     }
+    return realApi.getScripts()
+  },
+
+  getScript: async (id: number): Promise<Script> => {
+    if (USE_MOCK_API) {
+      return mockApi.getScript(id)
+    }
+    return realApi.getScript(id)
+  },
+
+  createScript: async (data: ScriptCreate): Promise<Script> => {
+    if (USE_MOCK_API) {
+      return mockApi.createScript(data)
+    }
+    return realApi.createScript(data)
+  },
+
+  updateScript: async (id: number, data: ScriptUpdate): Promise<Script> => {
+    if (USE_MOCK_API) {
+      return mockApi.updateScript(id, data)
+    }
+    return realApi.updateScript(id, data)
+  },
+
+  deleteScript: async (id: number): Promise<void> => {
+    if (USE_MOCK_API) {
+      return mockApi.deleteScript(id)
+    }
+    return realApi.deleteScript(id)
+  },
+
+  updateScriptContent: async (id: number, content: string): Promise<void> => {
+    if (USE_MOCK_API) {
+      return mockApi.updateScriptContent(id, content)
+    }
+    return realApi.updateScriptContent(id, content)
+  },
+
+  optimizePrompt: async (prompt: string): Promise<string[]> => {
+    if (USE_MOCK_API) {
+      return mockApi.optimizePrompt(prompt)
+    }
+    return realApi.optimizePrompt(prompt)
+  },
+
+  optimizeContent: async (content: string, scriptId?: number): Promise<{
+    type: 'structure' | 'dialogue' | 'description' | 'character'
+    title: string
+    description: string
+    suggestion: string
+  }[]> => {
+    if (USE_MOCK_API) {
+      return mockApi.optimizeContent(content)
+    }
+    return realApi.optimizeContent(content, scriptId)
   },
 }
