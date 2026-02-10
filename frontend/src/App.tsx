@@ -56,7 +56,9 @@ function App() {
   // 检查登录状态
   useEffect(() => {
     const token = localStorage.getItem('auth_token')
-    setIsAuthenticated(!!token)
+    const authState = !!token
+    console.log("Auth State:", authState)
+    setIsAuthenticated(authState)
     setIsLoading(false)
   }, [])
 
