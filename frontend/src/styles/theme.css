@@ -1,48 +1,77 @@
-/* AI视频制片链路系统 - 主题样式 */
-/* 风格: Apple Pro + Dark Mode + Glassmorphism */
+/* AFM1 - Obsidian Glass Design System */
+/* Apple Pro App Style + Dark Mode + Glassmorphism */
 
 :root {
-  /* ==================== 背景层级 ==================== */
-  --bg-primary: #000000;
-  --bg-secondary: #0d0d12;
-  --bg-tertiary: #1a1a24;
-  --bg-elevated: #252530;
-  --bg-overlay: rgba(0, 0, 0, 0.8);
+  /* ==================== Obsidian Backgrounds ==================== */
+  --bg-primary: #050505;
+  --bg-secondary: #0a0a0f;
+  --bg-tertiary: #111118;
+  --bg-elevated: #1a1a24;
+  --bg-overlay: rgba(5, 5, 5, 0.95);
 
-  /* ==================== 玻璃拟态 ==================== */
+  /* ==================== Glass Effects ==================== */
   --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-highlight: rgba(255, 255, 255, 0.12);
+  --glass-bg-hover: rgba(255, 255, 255, 0.06);
+  --glass-bg-active: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-border-hover: rgba(255, 255, 255, 0.12);
+  --glass-border-active: rgba(255, 255, 255, 0.18);
+  --glass-highlight: rgba(255, 255, 255, 0.1);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --glass-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
+  
+  /* Backdrop blur */
+  --backdrop-blur: blur(20px) saturate(180%);
+  --backdrop-blur-lg: blur(40px) saturate(200%);
 
-  /* ==================== 文字颜色 ==================== */
+  /* ==================== Neon Glow Accents ==================== */
+  --glow-blue: 0 0 20px rgba(10, 132, 255, 0.4), 0 0 40px rgba(10, 132, 255, 0.2);
+  --glow-purple: 0 0 20px rgba(191, 90, 242, 0.4), 0 0 40px rgba(191, 90, 242, 0.2);
+  --glow-green: 0 0 20px rgba(48, 209, 88, 0.4), 0 0 40px rgba(48, 209, 88, 0.2);
+  --glow-orange: 0 0 20px rgba(255, 159, 10, 0.4), 0 0 40px rgba(255, 159, 10, 0.2);
+  --glow-red: 0 0 20px rgba(255, 69, 58, 0.4), 0 0 40px rgba(255, 69, 58, 0.2);
+  --glow-yellow: 0 0 20px rgba(255, 214, 10, 0.4), 0 0 40px rgba(255, 214, 10, 0.2);
+
+  /* ==================== Accent Colors ==================== */
+  --accent-blue: #0a84ff;
+  --accent-blue-light: #409cff;
+  --accent-blue-dark: #0051d5;
+  --accent-purple: #bf5af2;
+  --accent-purple-light: #da8fff;
+  --accent-orange: #ff9f0a;
+  --accent-orange-light: #ffb340;
+  --accent-green: #30d158;
+  --accent-green-light: #64d2ff;
+  --accent-red: #ff453a;
+  --accent-red-light: #ff6961;
+  --accent-yellow: #ffd60a;
+  --accent-yellow-light: #ffe620;
+  --accent-cyan: #64d2ff;
+  --accent-pink: #ff375f;
+
+  /* ==================== Text Colors ==================== */
   --text-primary: #ffffff;
   --text-secondary: rgba(255, 255, 255, 0.7);
   --text-tertiary: rgba(255, 255, 255, 0.5);
   --text-quaternary: rgba(255, 255, 255, 0.3);
+  --text-muted: rgba(255, 255, 255, 0.2);
 
-  /* ==================== 强调色 ==================== */
-  --accent-blue: #0a84ff;
-  --accent-blue-light: #409cff;
-  --accent-purple: #bf5af2;
-  --accent-orange: #ff9f0a;
-  --accent-green: #30d158;
-  --accent-red: #ff453a;
-  --accent-yellow: #ffd60a;
-
-  /* ==================== 渐变色 ==================== */
-  --gradient-hero: linear-gradient(180deg, #1a1a2e 0%, #0d0d12 100%);
-  --gradient-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  /* ==================== Gradients ==================== */
+  --gradient-obsidian: linear-gradient(180deg, #0a0a0f 0%, #050505 100%);
+  --gradient-glass: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
   --gradient-accent: linear-gradient(135deg, #0a84ff 0%, #bf5af2 100%);
+  --gradient-accent-hover: linear-gradient(135deg, #409cff 0%, #da8fff 100%);
   --gradient-success: linear-gradient(135deg, #30d158 0%, #64d2ff 100%);
   --gradient-warning: linear-gradient(135deg, #ff9f0a 0%, #ffd60a 100%);
+  --gradient-danger: linear-gradient(135deg, #ff453a 0%, #ff375f 100%);
+  --gradient-glow: radial-gradient(ellipse at center, rgba(10, 132, 255, 0.15) 0%, transparent 70%);
 
-  /* ==================== 字体 ==================== */
+  /* ==================== Typography ==================== */
   --font-primary: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "SF Mono", "Fira Code", "JetBrains Mono", Consolas, Monaco, monospace;
   --font-chinese: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
 
-  /* ==================== 字号 ==================== */
+  /* Font sizes */
   --text-xs: 11px;
   --text-sm: 13px;
   --text-base: 15px;
@@ -51,14 +80,20 @@
   --text-2xl: 28px;
   --text-3xl: 36px;
   --text-4xl: 48px;
+  --text-5xl: 64px;
 
-  /* ==================== 字重 ==================== */
+  /* Font weights */
   --font-regular: 400;
   --font-medium: 500;
   --font-semibold: 600;
   --font-bold: 700;
 
-  /* ==================== 间距 ==================== */
+  /* Line heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* ==================== Spacing ==================== */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -69,33 +104,46 @@
   --space-10: 40px;
   --space-12: 48px;
   --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
 
-  /* ==================== 布局尺寸 ==================== */
-  --sidebar-width: 240px;
-  --sidebar-collapsed: 64px;
-  --header-height: 56px;
-  --content-max-width: 1400px;
-  --card-border-radius: 16px;
-  --button-border-radius: 8px;
-  --input-border-radius: 10px;
+  /* ==================== Layout ==================== */
+  --sidebar-width: 260px;
+  --sidebar-collapsed: 72px;
+  --header-height: 64px;
+  --content-max-width: 1440px;
 
-  /* ==================== 动画时间 ==================== */
+  /* Border radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* Legacy compatibility */
+  --card-border-radius: var(--radius-lg);
+  --button-border-radius: var(--radius-md);
+  --input-border-radius: var(--radius-md);
+
+  /* ==================== Animation ==================== */
   --duration-instant: 100ms;
-  --duration-fast: 200ms;
-  --duration-normal: 300ms;
-  --duration-slow: 500ms;
-  --duration-slower: 700ms;
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 400ms;
+  --duration-slower: 600ms;
 
-  /* ==================== 缓动函数 ==================== */
+  /* Easing functions */
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-dramatic: cubic-bezier(0.87, 0, 0.13, 1);
   --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ==================== 全局样式 ==================== */
+/* ==================== Global Reset ==================== */
 
-* {
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -105,18 +153,21 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   font-family: var(--font-primary);
   font-size: var(--text-base);
-  line-height: 1.5;
+  font-weight: var(--font-regular);
+  line-height: var(--leading-normal);
   color: var(--text-primary);
   background-color: var(--bg-primary);
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
-/* ==================== 滚动条样式 ==================== */
+/* ==================== Scrollbar Styling ==================== */
 
 ::-webkit-scrollbar {
   width: 8px;
@@ -124,21 +175,139 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--glass-border);
   border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--glass-highlight);
+  background: var(--glass-border-hover);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
-/* ==================== 选中文本样式 ==================== */
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--glass-border) transparent;
+}
+
+/* ==================== Selection ==================== */
 
 ::selection {
-  background: var(--accent-blue);
-  color: white;
+  background: rgba(10, 132, 255, 0.3);
+  color: var(--text-primary);
+}
+
+/* ==================== Focus Styles ==================== */
+
+:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+/* ==================== Utility Classes ==================== */
+
+/* Text utilities */
+.text-gradient {
+  background: var(--gradient-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-glow-blue {
+  text-shadow: 0 0 20px rgba(10, 132, 255, 0.5);
+}
+
+.text-glow-purple {
+  text-shadow: 0 0 20px rgba(191, 90, 242, 0.5);
+}
+
+/* Glow utilities */
+.glow-blue { box-shadow: var(--glow-blue); }
+.glow-purple { box-shadow: var(--glow-purple); }
+.glow-green { box-shadow: var(--glow-green); }
+.glow-orange { box-shadow: var(--glow-orange); }
+.glow-red { box-shadow: var(--glow-red); }
+.glow-yellow { box-shadow: var(--glow-yellow); }
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(10, 132, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(10, 132, 255, 0.6);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn var(--duration-normal) var(--ease-smooth);
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp var(--duration-slow) var(--ease-out-expo);
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
 }

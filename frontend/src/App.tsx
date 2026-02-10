@@ -1,85 +1,57 @@
 /**
- * 主应用组件
- * 使用简单的状态管理来切换登录页面和主应用
+ * 主应用组件 - Obsidian Glass 主题
+ * 使用 Sidebar + Header + Main Content 布局架构
  */
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Home, 
-  FileText, 
-  Image, 
-  Users, 
-  Music, 
-  Video, 
+import {
+  FileText,
+  Image as ImageIcon,
+  Users,
+  Music,
+  Video as VideoIcon,
   Download,
   Plus,
-  Search,
-  Bell,
-  Settings,
-  LogOut,
-  Sparkles
+  Sparkles,
 } from 'lucide-react'
+
+// Layout Components
+import { Sidebar, Header } from './components/layout'
+
+// Pages
 import Login from './pages/Login'
 import ScriptCreation from './pages/ScriptCreation'
+import Storyboard from './pages/Storyboard'
+import CharacterDesign from './pages/CharacterDesign'
+import Audio from './pages/Audio'
+import VideoPage from './pages/Video'
+import Export from './pages/Export'
+
+// UI Components
+import { GlassCard, GlowButton } from './components/ui'
+
+// Mock Data
+import { mockProjectStats, mockActivities } from './data/mock'
+
+// Styles
 import './styles/theme.css'
-import './styles/components.css'
 
 // 工作流程步骤
 const workflowSteps = [
-  {
-    title: '剧本创作',
-    icon: FileText,
-    description: '基于AI生成标准格式剧本',
-    color: 'var(--accent-blue)',
-  },
-  {
-    title: '分镜制作',
-    icon: Image,
-    description: '自动生成视觉化分镜图',
-    color: 'var(--accent-green)',
-  },
-  {
-    title: '人设制作',
-    icon: Users,
-    description: '创建一致性的角色形象',
-    color: 'var(--accent-purple)',
-  },
-  {
-    title: '音频生成',
-    icon: Music,
-    description: '生成旁白和配乐',
-    color: 'var(--accent-orange)',
-  },
-  {
-    title: '视频生成',
-    icon: Video,
-    description: '基于分镜生成视频片段',
-    color: 'var(--accent-red)',
-  },
-  {
-    title: '成片输出',
-    icon: Download,
-    description: '导出到剪映进行后期制作',
-    color: 'var(--accent-yellow)',
-  },
-]
-
-// 导航项
-const navItems = [
-  { key: 'home', icon: Home, label: '首页' },
-  { key: 'script', icon: FileText, label: '剧本创作' },
-  { key: 'storyboard', icon: Image, label: '分镜制作' },
-  { key: 'character', icon: Users, label: '人设制作' },
-  { key: 'audio', icon: Music, label: '音频生成' },
-  { key: 'video', icon: Video, label: '视频生成' },
-  { key: 'export', icon: Download, label: '成片输出' },
+  { key: 'script', title: '剧本创作', icon: FileText, description: '基于AI生成标准格式剧本', color: '#0a84ff' },
+  { key: 'storyboard', title: '分镜制作', icon: ImageIcon, description: '自动生成视觉化分镜图', color: '#30d158' },
+  { key: 'character', title: '人设制作', icon: Users, description: '创建一致性的角色形象', color: '#bf5af2' },
+  { key: 'audio', title: '音频生成', icon: Music, description: '生成旁白和配乐', color: '#ff9f0a' },
+  { key: 'video', title: '视频生成', icon: VideoIcon, description: '基于分镜生成视频片段', color: '#ff453a' },
+  { key: 'export', title: '成片输出', icon: Download, description: '导出到剪映进行后期制作', color: '#ffd60a' },
 ]
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [activeNav, setActiveNav] = useState('home')
   const [isLoading, setIsLoading] = useState(true)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   // 检查登录状态
   useEffect(() => {
@@ -96,8 +68,12 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="loading-screen">
-        <div className="loading-spinner-large" />
+      <div className="min-h-screen flex items-center justify-center bg-[#050505]">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          className="w-12 h-12 border-3 border-[rgba(255,255,255,0.1)] border-t-[#0a84ff] rounded-full"
+        />
       </div>
     )
   }
@@ -108,487 +84,220 @@ function App() {
   }
 
   return (
-    <div className="app-container">
+    <div className="min-h-screen bg-[#050505] text-white">
       {/* 侧边栏 */}
-      <aside className="sidebar">
-        <div className="sidebar-header">
-          <span className="logo-text">AFM.Create</span>
-        </div>
+      <Sidebar
+        activeNav={activeNav}
+        onNavChange={setActiveNav}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+        onLogout={handleLogout}
+      />
 
-        <nav className="sidebar-nav">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            const isActive = activeNav === item.key
-            return (
-              <button
-                key={item.key}
-                className={`nav-item-glass ${isActive ? 'active' : ''}`}
-                onClick={() => setActiveNav(item.key)}
-              >
-                <Icon 
-                  size={20} 
-                  className="nav-icon"
-                  style={{ color: isActive ? 'white' : 'var(--text-tertiary)' }}
-                />
-                <span style={{ color: isActive ? 'white' : 'var(--text-secondary)' }}>
-                  {item.label}
-                </span>
-              </button>
-            )
-          })}
-        </nav>
-
-        <div className="sidebar-footer">
-          <button className="nav-item-glass" onClick={handleLogout}>
-            <LogOut size={20} className="nav-icon" style={{ color: 'var(--text-tertiary)' }} />
-            <span style={{ color: 'var(--text-secondary)' }}>退出登录</span>
-          </button>
-        </div>
-      </aside>
+      {/* 顶部导航 */}
+      <Header sidebarCollapsed={sidebarCollapsed} />
 
       {/* 主内容区 */}
-      <main className="main-content">
-        {/* 顶部栏 */}
-        <header className="top-bar">
-          <div className="search-bar">
-            <Search size={18} />
-            <input type="text" placeholder="搜索项目..." />
-          </div>
-          <div className="top-bar-actions">
-            <button className="btn-icon">
-              <Bell size={20} />
-            </button>
-            <button className="btn-icon">
-              <Settings size={20} />
-            </button>
-            <div className="user-avatar">
-              <span>U</span>
-            </div>
-          </div>
-        </header>
-
-        {/* 页面内容 */}
+      <main
+        className="pt-16 min-h-screen transition-all duration-300"
+        style={{ marginLeft: sidebarCollapsed ? 72 : 260 }}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={activeNav}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="page-content"
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            className="h-[calc(100vh-64px)]"
           >
-            {activeNav === 'home' && (
-              <div className="home-page">
-                {/* 欢迎区域 */}
-                <section className="hero-section">
-                  <motion.h1
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    欢迎回来，创作者 👋 [Deployed: 2025-02-09]
-                  </motion.h1>
-                  <motion.p
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="hero-subtitle"
-                  >
-                    通过简单的文字描述，快速生成专业级视频内容
-                  </motion.p>
-                  <motion.button
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="btn-primary btn-large"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setActiveNav('script')}
-                  >
-                    <Plus size={20} />
-                    创建新项目
-                  </motion.button>
-                </section>
-
-                {/* 工作流程展示 */}
-                <section className="workflow-section">
-                  <h2>工作流程</h2>
-                  <div className="workflow-grid">
-                    {workflowSteps.map((step, index) => {
-                      const Icon = step.icon
-                      return (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.1 * index }}
-                          className="workflow-card glass-card"
-                          whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                          onClick={() => {
-                            if (step.title === '剧本创作') setActiveNav('script')
-                          }}
-                          style={{ cursor: step.title === '剧本创作' ? 'pointer' : 'default' }}
-                        >
-                          <div 
-                            className="workflow-icon"
-                            style={{ color: step.color }}
-                          >
-                            <Icon size={32} />
-                          </div>
-                          <h3>{step.title}</h3>
-                          <p>{step.description}</p>
-                        </motion.div>
-                      )
-                    })}
-                  </div>
-                </section>
-
-
-              </div>
-            )}
-
+            {activeNav === 'home' && <HomePage onNavChange={setActiveNav} />}
             {activeNav === 'script' && <ScriptCreation />}
-
-            {activeNav !== 'home' && activeNav !== 'script' && (
-              <div className="placeholder-page">
-                <div className="placeholder-content">
-                  <Sparkles size={48} color="var(--accent-purple)" />
-                  <h2>功能开发中</h2>
-                  <p>该功能正在紧锣密鼓地开发中，敬请期待...</p>
-                </div>
-              </div>
-            )}
+            {activeNav === 'storyboard' && <Storyboard />}
+            {activeNav === 'character' && <CharacterDesign />}
+            {activeNav === 'audio' && <Audio />}
+            {activeNav === 'video' && <VideoPage />}
+            {activeNav === 'export' && <Export />}
           </motion.div>
         </AnimatePresence>
       </main>
-
-      {/* 内联样式 */}
-      <style>{`
-        .app-container {
-          display: flex;
-          min-height: 100vh;
-          background: var(--bg-primary);
-        }
-
-        /* 加载屏幕 */
-        .loading-screen {
-          min-height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: var(--bg-primary);
-        }
-
-        .loading-spinner-large {
-          width: 48px;
-          height: 48px;
-          border: 3px solid var(--glass-border);
-          border-top-color: var(--accent-blue);
-          border-radius: 50%;
-          animation: spin 0.8s linear infinite;
-        }
-
-        /* 侧边栏 */
-        .sidebar {
-          width: 240px;
-          background: var(--bg-secondary);
-          border-right: 1px solid var(--glass-border);
-          display: flex;
-          flex-direction: column;
-          position: fixed;
-          height: 100vh;
-          z-index: 100;
-        }
-
-        .sidebar-header {
-          padding: var(--space-5);
-          display: flex;
-          align-items: center;
-          gap: var(--space-3);
-          border-bottom: 1px solid var(--glass-border);
-        }
-
-        .logo {
-          width: 40px;
-          height: 40px;
-          background: var(--gradient-accent);
-          border-radius: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          position: relative;
-        }
-
-        .logo-sparkle {
-          position: absolute;
-          top: -2px;
-          right: -2px;
-          color: var(--accent-yellow);
-        }
-
-        .logo-text {
-          font-size: var(--text-xl);
-          font-weight: var(--font-bold);
-          color: var(--text-primary);
-          font-family: var(--font-primary);
-          background: var(--gradient-accent);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          letter-spacing: -0.5px;
-        }
-
-        .sidebar-nav {
-          flex: 1;
-          padding: var(--space-3);
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-2);
-        }
-
-        .sidebar-footer {
-          padding: var(--space-3);
-          border-top: 1px solid var(--glass-border);
-        }
-
-        /* 玻璃拟态导航项 */
-        .nav-item-glass {
-          display: flex;
-          align-items: center;
-          gap: var(--space-3);
-          padding: 12px 16px;
-          border-radius: 12px;
-          background: transparent;
-          border: 1px solid transparent;
-          cursor: pointer;
-          transition: all 0.3s var(--ease-smooth);
-          text-align: left;
-          width: 100%;
-        }
-
-        .nav-item-glass:hover {
-          background: var(--glass-bg);
-          border-color: var(--glass-border);
-          backdrop-filter: blur(10px);
-        }
-
-        .nav-item-glass.active {
-          background: linear-gradient(135deg, rgba(10, 132, 255, 0.15) 0%, rgba(191, 90, 242, 0.15) 100%);
-          border-color: rgba(10, 132, 255, 0.3);
-          box-shadow: 
-            0 4px 24px rgba(10, 132, 255, 0.15),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        }
-
-        .nav-item-glass span {
-          font-size: var(--text-base);
-          font-weight: var(--font-medium);
-          transition: color 0.2s ease;
-        }
-
-        .nav-icon {
-          transition: color 0.2s ease, transform 0.2s ease;
-        }
-
-        .nav-item-glass:hover .nav-icon {
-          transform: scale(1.1);
-        }
-
-        /* 主内容区 */
-        .main-content {
-          flex: 1;
-          margin-left: 240px;
-          display: flex;
-          flex-direction: column;
-        }
-
-        /* 顶部栏 */
-        .top-bar {
-          height: 64px;
-          background: var(--bg-secondary);
-          border-bottom: 1px solid var(--glass-border);
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 0 var(--space-6);
-          position: sticky;
-          top: 0;
-          z-index: 50;
-        }
-
-        .search-bar {
-          display: flex;
-          align-items: center;
-          gap: var(--space-2);
-          background: var(--bg-elevated);
-          border: 1px solid var(--glass-border);
-          border-radius: 8px;
-          padding: 8px 16px;
-          width: 320px;
-          color: var(--text-tertiary);
-        }
-
-        .search-bar input {
-          background: transparent;
-          border: none;
-          outline: none;
-          color: var(--text-primary);
-          font-size: var(--text-base);
-          width: 100%;
-        }
-
-        .search-bar input::placeholder {
-          color: var(--text-tertiary);
-        }
-
-        .top-bar-actions {
-          display: flex;
-          align-items: center;
-          gap: var(--space-2);
-        }
-
-        .user-avatar {
-          width: 36px;
-          height: 36px;
-          background: var(--gradient-accent);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: white;
-          font-weight: var(--font-semibold);
-          font-size: var(--text-sm);
-          margin-left: var(--space-2);
-        }
-
-        /* 页面内容 */
-        .page-content {
-          flex: 1;
-          padding: var(--space-6);
-          overflow-y: auto;
-        }
-
-        /* 首页 */
-        .home-page {
-          max-width: 1200px;
-          margin: 0 auto;
-        }
-
-        .hero-section {
-          text-align: center;
-          padding: var(--space-10) 0;
-        }
-
-        .hero-section h1 {
-          font-size: var(--text-3xl);
-          font-weight: var(--font-bold);
-          color: var(--text-primary);
-          margin-bottom: var(--space-3);
-        }
-
-        .hero-subtitle {
-          font-size: var(--text-lg);
-          color: var(--text-secondary);
-          margin-bottom: var(--space-6);
-        }
-
-        .btn-large {
-          padding: 14px 28px;
-          font-size: var(--text-lg);
-        }
-
-        /* 工作流程 */
-        .workflow-section {
-          margin-top: var(--space-8);
-        }
-
-        .workflow-section h2 {
-          font-size: var(--text-xl);
-          font-weight: var(--font-semibold);
-          color: var(--text-primary);
-          margin-bottom: var(--space-5);
-        }
-
-        .workflow-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-          gap: var(--space-4);
-        }
-
-        .workflow-card {
-          padding: var(--space-6);
-          text-align: center;
-          cursor: pointer;
-        }
-
-        .workflow-icon {
-          margin-bottom: var(--space-3);
-        }
-
-        .workflow-card h3 {
-          font-size: var(--text-lg);
-          font-weight: var(--font-semibold);
-          color: var(--text-primary);
-          margin-bottom: var(--space-2);
-        }
-
-        .workflow-card p {
-          font-size: var(--text-sm);
-          color: var(--text-secondary);
-        }
-
-        /* 占位页面 */
-        .placeholder-page {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          min-height: 60vh;
-        }
-
-        .placeholder-content {
-          text-align: center;
-        }
-
-        .placeholder-content h2 {
-          font-size: var(--text-2xl);
-          font-weight: var(--font-semibold);
-          color: var(--text-primary);
-          margin: var(--space-4) 0 var(--space-2);
-        }
-
-        .placeholder-content p {
-          font-size: var(--text-base);
-          color: var(--text-secondary);
-        }
-
-        /* 响应式 */
-        @media (max-width: 1024px) {
-          .features-grid {
-            grid-template-columns: repeat(2, 1fr);
-          }
-        }
-
-        @media (max-width: 768px) {
-          .sidebar {
-            transform: translateX(-100%);
-          }
-
-          .main-content {
-            margin-left: 0;
-          }
-
-          .features-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .search-bar {
-            width: 200px;
-          }
-        }
-      `}</style>
     </div>
   )
+}
+
+// 首页组件
+interface HomePageProps {
+  onNavChange: (key: string) => void
+}
+
+function HomePage({ onNavChange }: HomePageProps) {
+  return (
+    <div className="h-full overflow-y-auto p-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* 欢迎区域 */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <h1 className="text-3xl font-bold text-white mb-2">
+            欢迎回来，创作者 <span className="inline-block animate-pulse">👋</span>
+          </h1>
+          <p className="text-[rgba(255,255,255,0.6)] mb-6">
+            通过AI驱动的视频制作工具，将创意快速转化为专业级内容
+          </p>
+          <GlowButton
+            variant="glow"
+            size="lg"
+            icon={<Plus size={20} />}
+            onClick={() => onNavChange('script')}
+          >
+            创建新项目
+          </GlowButton>
+        </motion.section>
+
+        {/* 统计数据 */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: '总项目', value: mockProjectStats.totalProjects, icon: FileText, color: '#0a84ff' },
+              { label: '已完成剧本', value: mockProjectStats.completedScripts, icon: FileText, color: '#30d158' },
+              { label: '生成视频', value: mockProjectStats.generatedVideos, icon: VideoIcon, color: '#bf5af2' },
+              { label: '总时长', value: `${Math.floor(mockProjectStats.totalDuration / 60)}分钟`, icon: Download, color: '#ff9f0a' },
+            ].map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 + index * 0.05 }}
+              >
+                <GlassCard className="text-center">
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3"
+                    style={{ backgroundColor: `${stat.color}20`, color: stat.color }}
+                  >
+                    <stat.icon size={20} strokeWidth={1.5} />
+                  </div>
+                  <p className="text-2xl font-bold text-white">{stat.value}</p>
+                  <p className="text-sm text-[rgba(255,255,255,0.5)]">{stat.label}</p>
+                </GlassCard>
+              </motion.div>
+            ))}
+          </div>
+        </motion.section>
+
+        {/* 工作流程 */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <h2 className="text-xl font-bold text-white mb-4">工作流程</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {workflowSteps.map((step, index) => {
+              const Icon = step.icon
+              return (
+                <motion.div
+                  key={step.key}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + index * 0.05 }}
+                >
+                  <GlassCard
+                    hover
+                    glow={step.key === 'script' ? 'blue' : step.key === 'storyboard' ? 'green' : step.key === 'character' ? 'purple' : step.key === 'audio' ? 'orange' : step.key === 'video' ? 'red' : 'none'}
+                    onClick={() => onNavChange(step.key)}
+                    className="cursor-pointer"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div
+                        className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: `${step.color}20`, color: step.color }}
+                      >
+                        <Icon size={24} strokeWidth={1.5} />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-white mb-1">{step.title}</h3>
+                        <p className="text-sm text-[rgba(255,255,255,0.5)]">{step.description}</p>
+                      </div>
+                    </div>
+                  </GlassCard>
+                </motion.div>
+              )
+            })}
+          </div>
+        </motion.section>
+
+        {/* 最近活动 */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <h2 className="text-xl font-bold text-white mb-4">最近活动</h2>
+          <GlassCard>
+            <div className="space-y-4">
+              {mockActivities.map((activity, index) => (
+                <motion.div
+                  key={activity.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.7 + index * 0.05 }}
+                  className="flex items-center gap-4 pb-4 border-b border-[rgba(255,255,255,0.06)] last:border-0 last:pb-0"
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{
+                      backgroundColor:
+                        activity.type === 'script' ? 'rgba(10,132,255,0.15)' :
+                        activity.type === 'storyboard' ? 'rgba(48,209,88,0.15)' :
+                        activity.type === 'character' ? 'rgba(191,90,242,0.15)' :
+                        activity.type === 'audio' ? 'rgba(255,159,10,0.15)' :
+                        'rgba(255,69,58,0.15)',
+                      color:
+                        activity.type === 'script' ? '#0a84ff' :
+                        activity.type === 'storyboard' ? '#30d158' :
+                        activity.type === 'character' ? '#bf5af2' :
+                        activity.type === 'audio' ? '#ff9f0a' :
+                        '#ff453a',
+                    }}
+                  >
+                    <Sparkles size={18} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white">
+                      {activity.action} <span className="text-[#0a84ff]">{activity.target}</span>
+                    </p>
+                    <p className="text-xs text-[rgba(255,255,255,0.4)]">
+                      {formatTime(activity.timestamp)}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </GlassCard>
+        </motion.section>
+      </div>
+    </div>
+  )
+}
+
+// 格式化时间
+function formatTime(date: Date): string {
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  const minutes = Math.floor(diff / 60000)
+  const hours = Math.floor(diff / 3600000)
+  const days = Math.floor(diff / 86400000)
+
+  if (minutes < 1) return '刚刚'
+  if (minutes < 60) return `${minutes}分钟前`
+  if (hours < 24) return `${hours}小时前`
+  return `${days}天前`
 }
 
 export default App
