@@ -21,7 +21,17 @@ async def lifespan(app: FastAPI):
     # 启动时执行
     print(f"🚀 {settings.APP_NAME} v{settings.APP_VERSION} 启动中...")
     
-    # 这里可以添加数据库连接、缓存初始化等
+    # 自动运行数据库迁移
+    try:
+        from alembic.config import Config
+        from alembic import command
+        print("📦 正在运行数据库迁移...")
+        alembic_cfg = Config("alembic.ini")
+        command.upgrade(alembic_cfg, "head")
+        print("✅ 数据库迁移完成")
+    except Exception as e:
+        print(f"⚠️ 数据库迁移失败: {e}")
+        print("   如果数据库已是最新版本，可以忽略此警告")
     
     yield
     
